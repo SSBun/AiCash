@@ -1,24 +1,35 @@
-//
-//  ContentView.swift
-//  AiCash
-//
-//  Created by caishilin on 2026/1/29.
-//
-
 import SwiftUI
 
 struct ContentView: View {
+    @StateObject private var viewModel = ProviderViewModel.shared
+    
     var body: some View {
-        VStack {
-            Image(systemName: "globe")
-                .imageScale(.large)
-                .foregroundStyle(.tint)
-            Text("Hello, world!")
+        NavigationSplitView {
+            ProviderListView(viewModel: viewModel)
+                .navigationSplitViewColumnWidth(min: 250, ideal: 320, max: 400)
+        } detail: {
+            if let provider = viewModel.selectedProvider {
+                ProviderDetailView(provider: provider)
+                    .id(provider.id) // Force view refresh when provider changes
+            } else {
+                VStack {
+                    Image(systemName: "chart.bar.xaxis")
+                        .font(.system(size: 64))
+                        .foregroundColor(.gray.opacity(0.3))
+                        .padding(.bottom, 16)
+                    Text("Select a provider to see details")
+                        .font(.title3)
+                        .foregroundColor(.gray)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(Color(red: 0.05, green: 0.05, blue: 0.05))
+            }
         }
-        .padding()
+        .preferredColorScheme(.dark)
     }
 }
 
 #Preview {
     ContentView()
+        .frame(width: 1000, height: 700)
 }
