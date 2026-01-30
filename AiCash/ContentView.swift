@@ -2,9 +2,10 @@ import SwiftUI
 
 struct ContentView: View {
     @StateObject private var viewModel = ProviderViewModel.shared
+    @State private var columnVisibility: NavigationSplitViewVisibility = .all
     
     var body: some View {
-        NavigationSplitView {
+        NavigationSplitView(columnVisibility: $columnVisibility) {
             ProviderListView(viewModel: viewModel)
                 .navigationSplitViewColumnWidth(min: 250, ideal: 320, max: 400)
         } detail: {
@@ -25,7 +26,13 @@ struct ContentView: View {
                 .background(Color(red: 0.05, green: 0.05, blue: 0.05))
             }
         }
+        .navigationSplitViewStyle(.balanced)
         .preferredColorScheme(.dark)
+        .onChange(of: viewModel.selectedProvider?.id) { _, newValue in
+            if newValue != nil {
+                columnVisibility = .all
+            }
+        }
     }
 }
 

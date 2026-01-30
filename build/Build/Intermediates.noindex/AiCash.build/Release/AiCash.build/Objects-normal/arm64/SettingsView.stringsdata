@@ -1,0 +1,336 @@
+{
+  "source": "/Users/caishilin/Desktop/personal/AiCash/AiCash/Views/SettingsView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Normal",
+        "location": {
+          "startingColumn": 27,
+          "startingLine": 25
+        }
+      },
+      {
+        "comment": "",
+        "key": "Providers",
+        "location": {
+          "startingColumn": 27,
+          "startingLine": 31
+        }
+      },
+      {
+        "comment": "",
+        "key": "General",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 51
+        }
+      },
+      {
+        "comment": "",
+        "key": "",
+        "location": {
+          "startingColumn": 32,
+          "startingLine": 63
+        }
+      },
+      {
+        "comment": "",
+        "key": "Launch at login",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 56
+        }
+      },
+      {
+        "comment": "",
+        "key": "Automatically start AiCash when you log in.",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 58
+        }
+      },
+      {
+        "comment": "",
+        "key": "Refresh",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 71
+        }
+      },
+      {
+        "comment": "",
+        "key": "Refresh Interval (minutes)",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 75
+        }
+      },
+      {
+        "comment": "",
+        "key": "",
+        "location": {
+          "startingColumn": 32,
+          "startingLine": 78
+        }
+      },
+      {
+        "comment": "",
+        "key": "15",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 79
+        }
+      },
+      {
+        "comment": "",
+        "key": "30",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 80
+        }
+      },
+      {
+        "comment": "",
+        "key": "60",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 81
+        }
+      },
+      {
+        "comment": "",
+        "key": "120",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 82
+        }
+      },
+      {
+        "comment": "",
+        "key": "Active Providers",
+        "location": {
+          "startingColumn": 38,
+          "startingLine": 103
+        }
+      },
+      {
+        "comment": "",
+        "key": "Add Provider",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 144
+        }
+      },
+      {
+        "comment": "",
+        "key": "Edit Provider",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 212
+        }
+      },
+      {
+        "comment": "",
+        "key": "Basic Information",
+        "location": {
+          "startingColumn": 25,
+          "startingLine": 219
+        }
+      },
+      {
+        "comment": "",
+        "key": "Authentication",
+        "location": {
+          "startingColumn": 29,
+          "startingLine": 225
+        }
+      },
+      {
+        "comment": "",
+        "key": "Authentication",
+        "location": {
+          "startingColumn": 29,
+          "startingLine": 232
+        }
+      },
+      {
+        "comment": "",
+        "key": "Authentication",
+        "location": {
+          "startingColumn": 29,
+          "startingLine": 237
+        }
+      },
+      {
+        "comment": "",
+        "key": "Display Name",
+        "location": {
+          "startingColumn": 31,
+          "startingLine": 220
+        }
+      },
+      {
+        "comment": "",
+        "key": "Full Name",
+        "location": {
+          "startingColumn": 31,
+          "startingLine": 221
+        }
+      },
+      {
+        "comment": "",
+        "key": "User ID",
+        "location": {
+          "startingColumn": 35,
+          "startingLine": 233
+        }
+      },
+      {
+        "comment": "",
+        "key": "Token",
+        "location": {
+          "startingColumn": 35,
+          "startingLine": 234
+        }
+      },
+      {
+        "comment": "",
+        "key": "Cancel",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 248
+        }
+      },
+      {
+        "comment": "",
+        "key": "Save",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 250
+        }
+      },
+      {
+        "comment": "",
+        "key": "Category",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 325
+        }
+      },
+      {
+        "comment": "",
+        "key": "Add New Provider",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 313
+        }
+      },
+      {
+        "comment": "",
+        "key": "Basic Information",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 337
+        }
+      },
+      {
+        "comment": "",
+        "key": "Display Name (e.g. My Cursor)",
+        "location": {
+          "startingColumn": 35,
+          "startingLine": 341
+        }
+      },
+      {
+        "comment": "",
+        "key": "Full Name (e.g. Cursor AI Pro)",
+        "location": {
+          "startingColumn": 35,
+          "startingLine": 344
+        }
+      },
+      {
+        "comment": "",
+        "key": "Authentication",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 352
+        }
+      },
+      {
+        "comment": "",
+        "key": "Please paste your Cursor.com cookies here. You can find them in your browser's Developer Tools (Application -> Cookies).",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 356
+        }
+      },
+      {
+        "comment": "",
+        "key": "One-Step Login (Coming Soon)",
+        "location": {
+          "startingColumn": 39,
+          "startingLine": 375
+        }
+      },
+      {
+        "comment": "",
+        "key": "Authentication",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 383
+        }
+      },
+      {
+        "comment": "",
+        "key": "User ID",
+        "location": {
+          "startingColumn": 39,
+          "startingLine": 387
+        }
+      },
+      {
+        "comment": "",
+        "key": "Token",
+        "location": {
+          "startingColumn": 39,
+          "startingLine": 390
+        }
+      },
+      {
+        "comment": "",
+        "key": "Authentication",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 395
+        }
+      },
+      {
+        "comment": "",
+        "key": "Paste the full cURL command for the ZenMux user/info API here.",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 399
+        }
+      },
+      {
+        "comment": "",
+        "key": "Cancel",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 423
+        }
+      },
+      {
+        "comment": "",
+        "key": "Add Provider",
+        "location": {
+          "startingColumn": 24,
+          "startingLine": 430
+        }
+      }
+    ]
+  },
+  "version": 1
+}

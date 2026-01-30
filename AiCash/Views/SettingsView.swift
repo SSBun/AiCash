@@ -37,7 +37,11 @@ struct SettingsView: View {
 }
 
 struct NormalSettingsView: View {
-    @AppStorage("launchAtLogin") private var launchAtLogin = false
+    @AppStorage("launchAtLogin") private var launchAtLogin = false {
+        didSet {
+            LaunchAtLoginManager.shared.setEnabled(launchAtLogin)
+        }
+    }
     @AppStorage("refreshInterval") private var refreshInterval = 30
     
     var body: some View {
@@ -176,6 +180,9 @@ struct EditProviderView: View {
     @State private var name: String
     @State private var fullName: String
     @State private var cookieString: String
+    @State private var userId: String
+    @State private var token: String
+    @State private var curlCommand: String
     
     init(viewModel: ProviderViewModel, provider: any AIProviderProtocol) {
         self.viewModel = viewModel
@@ -183,6 +190,20 @@ struct EditProviderView: View {
         _name = State(initialValue: provider.name)
         _fullName = State(initialValue: provider.fullName)
         _cookieString = State(initialValue: provider.getCookieString())
+        
+        if let blt = provider as? BLTProvider {
+            _userId = State(initialValue: blt.userId)
+            _token = State(initialValue: blt.token)
+            _curlCommand = State(initialValue: "")
+        } else if let zenmux = provider as? ZenMuxProvider {
+            _userId = State(initialValue: "")
+            _token = State(initialValue: zenmux.token)
+            _curlCommand = State(initialValue: zenmux.curlCommand)
+        } else {
+            _userId = State(initialValue: "")
+            _token = State(initialValue: "")
+            _curlCommand = State(initialValue: "")
+        }
     }
     
     var body: some View {
@@ -207,6 +228,18 @@ struct EditProviderView: View {
                             .frame(height: 100)
                             .overlay(RoundedRectangle(cornerRadius: 4).stroke(Color.gray.opacity(0.2)))
                     }
+                } else if let _ = provider as? BLTProvider {
+                    Section("Authentication") {
+                        TextField("User ID", text: $userId)
+                        TextField("Token", text: $token)
+                    }
+                } else if let _ = provider as? ZenMuxProvider {
+                    Section("Authentication") {
+                        TextEditor(text: $curlCommand)
+                            .font(.system(size: 11, design: .monospaced))
+                            .frame(height: 150)
+                            .overlay(RoundedRectangle(cornerRadius: 4).stroke(Color.gray.opacity(0.2)))
+                    }
                 }
             }
             .formStyle(.grouped)
@@ -217,7 +250,15 @@ struct EditProviderView: View {
                 Button("Save") {
                     provider.name = name
                     provider.fullName = fullName
-                    provider.setCookies(cookieString)
+                    if let cursor = provider as? CursorProvider {
+                        cursor.setCookies(cookieString)
+                    } else if let blt = provider as? BLTProvider {
+                        blt.userId = userId
+                        blt.token = token
+                    } else if let zenmux = provider as? ZenMuxProvider {
+                        zenmux.token = token
+                        zenmux.curlCommand = curlCommand
+                    }
                     StorageManager.shared.saveProviders(viewModel.providers)
                     dismiss()
                 }
@@ -232,14 +273,16 @@ struct EditProviderView: View {
 
 enum ProviderCategory: String, CaseIterable, Identifiable {
     case cursor = "Cursor"
-    case custom = "Custom Mock"
+    case blt = "BLT"
+    case zenmux = "ZenMux"
     
     var id: String { rawValue }
     
     var icon: String {
         switch self {
         case .cursor: return "cpu"
-        case .custom: return "chart.line.uptrend.xyaxis"
+        case .blt: return "chart.line.uptrend.xyaxis"
+        case .zenmux: return "bolt.shield"
         }
     }
 }
@@ -256,8 +299,12 @@ struct AddProviderView: View {
     // Cursor specific
     @State private var cookieString = ""
     
-    // Mock specific
-    @State private var symbol = ""
+    // BLT specific
+    @State private var userId = ""
+    @State private var token = ""
+    
+    // ZenMux specific
+    @State private var curlCommand = ""
     
     var body: some View {
         VStack(spacing: 0) {
@@ -331,14 +378,38 @@ struct AddProviderView: View {
                             .buttonStyle(.bordered)
                             .disabled(true)
                         }
-                    } else {
+                    } else if selectedCategory == .blt {
                         VStack(alignment: .leading, spacing: 12) {
-                            Text("Mock Configuration")
+                            Text("Authentication")
                                 .font(.system(size: 13, weight: .semibold))
                                 .foregroundColor(.secondary)
                             
-                            TextField("Symbol (e.g. MSFT)", text: $symbol)
+                            TextField("User ID", text: $userId)
                                 .textFieldStyle(.roundedBorder)
+                            
+                            TextField("Token", text: $token)
+                                .textFieldStyle(.roundedBorder)
+                        }
+                    } else if selectedCategory == .zenmux {
+                        VStack(alignment: .leading, spacing: 12) {
+                            Text("Authentication")
+                                .font(.system(size: 13, weight: .semibold))
+                                .foregroundColor(.secondary)
+                            
+                            Text("Paste the full cURL command for the ZenMux user/info API here.")
+                                .font(.system(size: 11))
+                                .foregroundColor(.secondary)
+                            
+                            TextEditor(text: $curlCommand)
+                                .font(.system(size: 11, design: .monospaced))
+                                .frame(height: 150)
+                                .padding(4)
+                                .background(Color(NSColor.controlBackgroundColor))
+                                .cornerRadius(4)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 4)
+                                        .stroke(Color.gray.opacity(0.2), lineWidth: 1)
+                                )
                         }
                     }
                 }
@@ -368,48 +439,67 @@ struct AddProviderView: View {
         .frame(width: 450, height: 550)
         .onAppear {
             if name.isEmpty {
-                name = selectedCategory == .cursor ? "Cursor" : ""
-                fullName = selectedCategory == .cursor ? "Cursor AI" : ""
+                updateDefaultNames(for: selectedCategory)
             }
         }
         .onChange(of: selectedCategory) { _, newValue in
-            if name == "Cursor" || name.isEmpty {
-                name = newValue == .cursor ? "Cursor" : ""
-                fullName = newValue == .cursor ? "Cursor AI" : ""
-            }
+            updateDefaultNames(for: newValue)
+        }
+    }
+    
+    private func updateDefaultNames(for category: ProviderCategory) {
+        switch category {
+        case .cursor:
+            name = "Cursor"
+            fullName = "Cursor AI"
+        case .blt:
+            name = "BLT"
+            fullName = "BLT API"
+        case .zenmux:
+            name = "ZenMux"
+            fullName = "ZenMux AI"
         }
     }
     
     private var isAddDisabled: Bool {
         if name.isEmpty || fullName.isEmpty { return true }
-        if selectedCategory == .cursor {
+        switch selectedCategory {
+        case .cursor:
             return cookieString.isEmpty
-        } else {
-            return symbol.isEmpty
+        case .blt:
+            return userId.isEmpty || token.isEmpty
+        case .zenmux:
+            return curlCommand.isEmpty
         }
     }
     
     private func addProvider() {
         let provider: any AIProviderProtocol
-        if selectedCategory == .cursor {
+        switch selectedCategory {
+        case .cursor:
             let cursor = CursorProvider()
             cursor.setCookies(cookieString)
             cursor.name = name
             cursor.fullName = fullName
             provider = cursor
-        } else {
-            provider = MockAIProvider(
-                name: name,
-                symbol: symbol,
-                fullName: fullName,
-                balance: 0.0,
-                change: 0.0,
-                usageHistory: []
-            )
+        case .blt:
+            let blt = BLTProvider()
+            blt.userId = userId
+            blt.token = token
+            blt.name = name
+            blt.fullName = fullName
+            provider = blt
+        case .zenmux:
+            let zenmux = ZenMuxProvider()
+            zenmux.curlCommand = curlCommand
+            zenmux.name = name
+            zenmux.fullName = fullName
+            provider = zenmux
         }
         
         viewModel.addProvider(provider)
         dismiss()
     }
 }
+
 

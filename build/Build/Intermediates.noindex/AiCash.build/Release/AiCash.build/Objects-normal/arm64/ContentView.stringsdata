@@ -1,0 +1,16 @@
+{
+  "source": "/Users/caishilin/Desktop/personal/AiCash/AiCash/ContentView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Select a provider to see details",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 21
+        }
+      }
+    ]
+  },
+  "version": 1
+}

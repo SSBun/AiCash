@@ -1,0 +1,20 @@
+version: "Apple Swift version 6.0.3 (swiftlang-6.0.3.1.10 clang-1600.0.30.1)"
+options: "39baf11df1ee3fc5561c5ab69d448a9cb4dd939e04abc070beeda7e2266cfe71"
+build_start_time: [1769739438, 587411000]
+build_end_time: [1769739446, 199199000]
+inputs:
+  "/Users/caishilin/Desktop/personal/AiCash/AiCash/AiCashApp.swift": [1769688471, 218138931]
+  "/Users/caishilin/Desktop/personal/AiCash/AiCash/ContentView.swift": [1769677265, 520193211]
+  "/Users/caishilin/Desktop/personal/AiCash/AiCash/Models/AIProvider.swift": [1769687538, 324304876]
+  "/Users/caishilin/Desktop/personal/AiCash/AiCash/Models/BLTProvider.swift": [1769677265, 520142087]
+  "/Users/caishilin/Desktop/personal/AiCash/AiCash/Models/CursorProvider.swift": [1769669377, 431495869]
+  "/Users/caishilin/Desktop/personal/AiCash/AiCash/Models/ZenMuxProvider.swift": [1769679107, 81578086]
+  "/Users/caishilin/Desktop/personal/AiCash/AiCash/Utilities/LaunchAtLogin.swift": [1769738660, 629430291]
+  "/Users/caishilin/Desktop/personal/AiCash/AiCash/Utilities/Logger.swift": [1769666124, 304133357]
+  "/Users/caishilin/Desktop/personal/AiCash/AiCash/Utilities/StorageManager.swift": [1769678076, 838879925]
+  "/Users/caishilin/Desktop/personal/AiCash/AiCash/Views/DetailView.swift": [1769685910, 21412627]
+  "/Users/caishilin/Desktop/personal/AiCash/AiCash/Views/ProviderListView.swift": [1769685106, 646499171]
+  "/Users/caishilin/Desktop/personal/AiCash/AiCash/Views/SettingsView.swift": [1769738669, 141387672]
+  "/Users/caishilin/Desktop/personal/AiCash/AiCash/Views/StatusMenuView.swift": [1769738590, 167350660]
+  ? "/Users/caishilin/Desktop/personal/AiCash/build/Build/Intermediates.noindex/AiCash.build/Release/AiCash.build/DerivedSources/GeneratedAssetSymbols.swift"
+  : [1769739437, 191830896]

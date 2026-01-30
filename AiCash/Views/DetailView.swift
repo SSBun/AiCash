@@ -1,44 +1,20 @@
 import SwiftUI
 import Charts
 
+struct DailyCost: Identifiable {
+    let id = UUID()
+    let date: Date
+    let amount: Double
+}
+
 struct DetailView<Provider: AIProviderProtocol>: View {
     @ObservedObject var provider: Provider
+    @State private var refreshRotation: Double = 0
     
     var body: some View {
         ScrollView {
             VStack(spacing: 24) {
-                // Header Information
-                HStack(alignment: .bottom) {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(provider.fullName)
-                            .font(.system(size: 28, weight: .bold))
-                        Text(provider.symbol)
-                            .font(.system(size: 18))
-                            .foregroundColor(.gray)
-                    }
-                    
-                    Spacer()
-                    
-                    if provider.isLoading {
-                        ProgressView()
-                            .scaleEffect(0.8)
-                            .padding(.trailing, 8)
-                    }
-                    
-                    VStack(alignment: .trailing, spacing: 4) {
-                        Text(provider.balanceString)
-                            .font(.system(size: 32, weight: .bold))
-                        
-                        HStack(spacing: 4) {
-                            Image(systemName: provider.change >= 0 ? "arrow.up.right" : "arrow.down.right")
-                            Text(provider.changeString)
-                        }
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundColor(provider.change >= 0 ? .red : .green)
-                    }
-                }
-                .padding(.horizontal)
-                .padding(.top, 20)
+                headerSection
                 
                 if let error = provider.errorMessage {
                     Text(error)
@@ -50,67 +26,271 @@ struct DetailView<Provider: AIProviderProtocol>: View {
                 Divider()
                     .padding(.horizontal)
                 
-                // Main Usage Chart
-                VStack(alignment: .leading, spacing: 16) {
-                    Text("Usage History")
-                        .font(.system(size: 20, weight: .bold))
-                        .padding(.horizontal)
-                    
-                    if provider.usageHistory.isEmpty {
-                        VStack {
-                            Text("No usage data available")
-                                .foregroundColor(.gray)
-                        }
-                        .frame(height: 300)
-                        .frame(maxWidth: .infinity)
-                    } else {
-                        Chart {
-                            ForEach(provider.usageHistory) { usage in
-                                LineMark(
-                                    x: .value("Time", usage.date),
-                                    y: .value("Usage", usage.amount)
-                                )
-                                .foregroundStyle(provider.change >= 0 ? Color.red : Color.green)
-                                
-                                AreaMark(
-                                    x: .value("Time", usage.date),
-                                    y: .value("Usage", usage.amount)
-                                )
-                                .foregroundStyle(
-                                    LinearGradient(
-                                        colors: [
-                                            (provider.change >= 0 ? Color.red : Color.green).opacity(0.2),
-                                            (provider.change >= 0 ? Color.red : Color.green).opacity(0.0)
-                                        ],
-                                        startPoint: .top,
-                                        endPoint: .bottom
-                                    )
-                                )
-                            }
-                        }
-                        .frame(height: 300)
-                        .padding(.horizontal)
-                    }
-                }
+                usageOverviewSection
                 
-                // Statistics Grid
-                LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 16) {
-                    StatCard(title: "Status", value: provider.isLoading ? "Loading..." : "Active", icon: "bolt.fill")
-                    StatCard(title: "Balance", value: "$\(provider.balanceString)", icon: "dollarsign.circle")
-                    StatCard(title: "Provider", value: provider.name, icon: "cpu")
-                    StatCard(title: "Last Sync", value: "Just now", icon: "clock")
+                statisticsGridSection
+                
+                if !provider.usageEvents.isEmpty {
+                    usageEventsSection
                 }
-                .padding()
                 
                 Spacer()
             }
         }
         .background(Color(red: 0.05, green: 0.05, blue: 0.05))
-        .onAppear {
-            Task {
-                await provider.fetchData()
+    }
+    
+    private var headerSection: some View {
+        HStack(alignment: .bottom) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text(provider.fullName)
+                    .font(.system(size: 28, weight: .bold))
+                Text(provider.symbol)
+                    .font(.system(size: 18))
+                    .foregroundColor(.gray)
+            }
+            
+            Spacer()
+            
+            if provider.isLoading {
+                ProgressView()
+                    .scaleEffect(0.8)
+                    .padding(.trailing, 8)
+            }
+            
+            VStack(alignment: .trailing, spacing: 4) {
+                Text(provider.balanceString)
+                    .font(.system(size: 32, weight: .bold))
+                
+                HStack(spacing: 4) {
+                    Image(systemName: "arrow.up.right")
+                    Text(provider.todayUsageString)
+                }
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundColor(.red)
+            }
+            
+            Button(action: {
+                withAnimation(.easeInOut(duration: 0.6)) {
+                    refreshRotation += 360
+                }
+                Task {
+                    await provider.fetchData()
+                }
+            }) {
+                Image(systemName: "arrow.clockwise")
+                    .font(.system(size: 14, weight: .bold))
+                    .foregroundColor(.gray)
+                    .padding(8)
+                    .background(Color.white.opacity(0.1))
+                    .clipShape(Circle())
+                    .rotationEffect(.degrees(refreshRotation))
+            }
+            .buttonStyle(.plain)
+            .padding(.leading, 16)
+            .padding(.bottom, 8)
+            .help("Refresh")
+        }
+        .padding(.horizontal)
+        .padding(.top, 20)
+    }
+    
+    private var usageOverviewSection: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("Usage Overview")
+                .font(.system(size: 20, weight: .bold))
+                .padding(.horizontal)
+            
+            if !(provider is BLTProvider) {
+                HStack(spacing: 16) {
+                    UsageCard(
+                        title: "Included Usage",
+                        value: "$\(String(format: "%.2f", provider.includedUsage))",
+                        limit: "$\(String(format: "%.0f", provider.includedLimit))",
+                        progress: provider.includedLimit > 0 ? provider.includedUsage / provider.includedLimit : 0
+                    )
+                    
+                    UsageCard(
+                        title: "On-Demand Usage",
+                        value: "$\(String(format: "%.2f", provider.onDemandUsage))",
+                        limit: "Unlimited",
+                        progress: 0,
+                        isUnlimited: true
+                    )
+                }
+                .padding(.horizontal)
+            } else {
+                HStack(spacing: 16) {
+                    UsageCard(
+                        title: "Used Quota",
+                        value: "$\(String(format: "%.2f", provider.includedUsage))",
+                        limit: "Total",
+                        progress: 0,
+                        isUnlimited: true
+                    )
+                    
+                    UsageCard(
+                        title: "Remaining Quota",
+                        value: "$\(String(format: "%.2f", provider.balance))",
+                        limit: "Current",
+                        progress: 0,
+                        isUnlimited: true
+                    )
+                }
+                .padding(.horizontal)
+            }
+            
+            if !provider.usageHistory.isEmpty {
+                usageChart
+            }
+            
+            if !dailyCostData.isEmpty {
+                dailyCostChart
             }
         }
+    }
+    
+    /// Aggregates usage history by calendar day for the bar chart.
+    private var dailyCostData: [DailyCost] {
+        let calendar = Calendar.current
+        var byDay: [Date: Double] = [:]
+        for usage in provider.usageHistory {
+            let day = calendar.startOfDay(for: usage.date)
+            byDay[day, default: 0] += usage.amount
+        }
+        return byDay.sorted(by: { $0.key < $1.key }).map { DailyCost(date: $0.key, amount: $0.value) }
+    }
+    
+    private var dailyCostChart: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Daily Cost")
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundColor(.secondary)
+                .padding(.horizontal)
+            
+            Chart(dailyCostData) { item in
+                BarMark(
+                    x: .value("Date", item.date),
+                    y: .value("Cost", item.amount),
+                    width: .fixed(40)
+                )
+                .foregroundStyle(Color.red.opacity(0.8))
+                .cornerRadius(4)
+                .annotation(position: .top) {
+                    Text("$\(String(format: "%.2f", item.amount))")
+                        .font(.system(size: 10, weight: .medium))
+                        .foregroundColor(.white)
+                }
+            }
+            .chartYAxis {
+                AxisMarks(position: .leading, values: .automatic) { _ in
+                    AxisGridLine()
+                    AxisValueLabel(format: .currency(code: "USD"))
+                }
+            }
+            .chartXAxis {
+                AxisMarks(values: .stride(by: .day, count: 1)) { _ in
+                    AxisGridLine()
+                    AxisValueLabel(format: .dateTime.month(.abbreviated).day())
+                }
+            }
+            .frame(height: 200)
+            .padding(.horizontal)
+        }
+    }
+    
+    private var usageChart: some View {
+        Chart {
+            ForEach(provider.usageHistory) { usage in
+                LineMark(
+                    x: .value("Time", usage.date),
+                    y: .value("Usage", usage.amount)
+                )
+                .foregroundStyle(Color.red)
+                
+                AreaMark(
+                    x: .value("Time", usage.date),
+                    y: .value("Usage", usage.amount)
+                )
+                .foregroundStyle(
+                    LinearGradient(
+                        colors: [
+                            Color.red.opacity(0.2),
+                            Color.red.opacity(0.0)
+                        ],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                )
+            }
+        }
+        .frame(height: 200)
+        .padding(.horizontal)
+    }
+    
+    private var usageEventsSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Recent Events")
+                .font(.system(size: 20, weight: .bold))
+                .padding(.horizontal)
+            
+            VStack(spacing: 0) {
+                // Header
+                            HStack {
+                                Text("Date").frame(width: 100, alignment: .leading)
+                                Text("Model").frame(maxWidth: .infinity, alignment: .leading)
+                                Text("In").frame(width: 50, alignment: .trailing)
+                                if !(provider is BLTProvider) {
+                                    Text("Out").frame(width: 50, alignment: .trailing)
+                                    Text("Cache").frame(width: 50, alignment: .trailing)
+                                }
+                                Text("Total").frame(width: 60, alignment: .trailing)
+                                Text("Cost").frame(width: 80, alignment: .trailing)
+                                if !(provider is BLTProvider) {
+                                    Text("$/1M").frame(width: 60, alignment: .trailing)
+                                }
+                            }
+                            .font(.system(size: 12, weight: .bold))
+                            .foregroundColor(.secondary)
+                            .padding(.vertical, 8)
+                            .padding(.horizontal)
+                            .background(Color.white.opacity(0.05))
+                            
+                            ForEach(provider.usageEvents) { event in
+                                Divider()
+                                HStack {
+                                    Text(event.date).frame(width: 100, alignment: .leading)
+                                    Text(event.model).frame(maxWidth: .infinity, alignment: .leading)
+                                    Text(event.inputTokensFormatted).frame(width: 50, alignment: .trailing)
+                                    if !(provider is BLTProvider) {
+                                        Text(event.outputTokensFormatted).frame(width: 50, alignment: .trailing)
+                                        Text(event.cacheTokensFormatted).frame(width: 50, alignment: .trailing)
+                                    }
+                                    Text(event.totalTokensFormatted).frame(width: 60, alignment: .trailing)
+                                    Text(event.costFormatted).frame(width: 80, alignment: .trailing)
+                                    if !(provider is BLTProvider) {
+                                        Text(event.pricePerMillion).frame(width: 60, alignment: .trailing)
+                                    }
+                                }
+                                .font(.system(size: 11))
+                                .padding(.vertical, 8)
+                                .padding(.horizontal)
+                            }
+            }
+            .background(Color.white.opacity(0.03))
+            .cornerRadius(8)
+            .padding(.horizontal)
+        }
+    }
+    
+    private var statisticsGridSection: some View {
+        LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 16) {
+            StatCard(title: "Status", value: provider.isLoading ? "Loading..." : "Active", icon: "bolt.fill")
+            StatCard(title: "Balance", value: "$\(provider.balanceString)", icon: "dollarsign.circle")
+            StatCard(title: "Provider", value: provider.name, icon: "cpu")
+            StatCard(title: "Last Sync", value: "Just now", icon: "clock")
+        }
+        .padding()
     }
 }
 
@@ -120,8 +300,10 @@ struct ProviderDetailView: View {
     var body: some View {
         if let cursor = provider as? CursorProvider {
             DetailView(provider: cursor)
-        } else if let mock = provider as? MockAIProvider {
-            DetailView(provider: mock)
+        } else if let blt = provider as? BLTProvider {
+            DetailView(provider: blt)
+        } else if let zenmux = provider as? ZenMuxProvider {
+            DetailView(provider: zenmux)
         } else {
             Text("Unknown provider type")
         }
@@ -148,6 +330,50 @@ struct StatCard: View {
                 .foregroundColor(.white)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+        .padding()
+        .background(Color.white.opacity(0.05))
+        .cornerRadius(12)
+    }
+}
+
+struct UsageCard: View {
+    let title: String
+    let value: String
+    let limit: String
+    let progress: Double
+    var isUnlimited: Bool = false
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text(title)
+                .font(.system(size: 12))
+                .foregroundColor(.secondary)
+            
+            HStack(alignment: .bottom, spacing: 4) {
+                Text(value)
+                    .font(.system(size: 24, weight: .bold))
+                Text("/ \(limit)")
+                    .font(.system(size: 16))
+                    .foregroundColor(.secondary)
+                    .padding(.bottom, 2)
+            }
+            
+            if !isUnlimited {
+                GeometryReader { geo in
+                    ZStack(alignment: .leading) {
+                        RoundedRectangle(cornerRadius: 2)
+                            .fill(Color.white.opacity(0.1))
+                        RoundedRectangle(cornerRadius: 2)
+                            .fill(Color.blue)
+                            .frame(width: geo.size.width * CGFloat(min(progress, 1.0)))
+                    }
+                }
+                .frame(height: 4)
+            } else {
+                Divider()
+                    .background(Color.white.opacity(0.1))
+            }
+        }
         .padding()
         .background(Color.white.opacity(0.05))
         .cornerRadius(12)

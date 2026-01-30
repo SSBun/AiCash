@@ -19,7 +19,7 @@ struct ProviderRow<Provider: AIProviderProtocol>: View {
             
             SparklineView(
                 data: provider.usageHistory.map { $0.amount },
-                color: provider.change >= 0 ? .red : .green
+                color: .red
             )
             .frame(width: 60, height: 32)
             
@@ -28,11 +28,11 @@ struct ProviderRow<Provider: AIProviderProtocol>: View {
                     .font(.system(size: 16, weight: .semibold))
                     .foregroundColor(.white)
                 
-                Text(provider.changeString)
+                Text(provider.todayUsageString)
                     .font(.system(size: 12, weight: .bold))
                     .frame(width: 64)
                     .padding(.vertical, 2)
-                    .background(provider.change >= 0 ? Color.red : Color.green)
+                    .background(Color.red)
                     .cornerRadius(4)
                     .foregroundColor(.white)
             }
@@ -52,8 +52,10 @@ struct ProviderRowWrapper: View {
     var body: some View {
         if let cursor = provider as? CursorProvider {
             ProviderRow(provider: cursor, isSelected: isSelected)
-        } else if let mock = provider as? MockAIProvider {
-            ProviderRow(provider: mock, isSelected: isSelected)
+        } else if let blt = provider as? BLTProvider {
+            ProviderRow(provider: blt, isSelected: isSelected)
+        } else if let zenmux = provider as? ZenMuxProvider {
+            ProviderRow(provider: zenmux, isSelected: isSelected)
         } else {
             Text("Unknown")
         }
@@ -62,6 +64,7 @@ struct ProviderRowWrapper: View {
 
 struct ProviderListView: View {
     @ObservedObject var viewModel: ProviderViewModel
+    @State private var refreshRotation: Double = 0
     
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -80,7 +83,7 @@ struct ProviderListView: View {
             
             // Header
             HStack {
-                Text("My Symbols")
+                Text("Providers")
                     .font(.system(size: 18, weight: .bold))
                     .foregroundColor(.white)
                 Image(systemName: "chevron.up.chevron.down")
@@ -88,12 +91,16 @@ struct ProviderListView: View {
                     .foregroundColor(.gray)
                 Spacer()
                 Button(action: {
+                    withAnimation(.easeInOut(duration: 0.6)) {
+                        refreshRotation += 360
+                    }
                     Task {
                         await viewModel.refreshAll()
                     }
                 }) {
                     Image(systemName: "arrow.clockwise")
                         .foregroundColor(.gray)
+                        .rotationEffect(.degrees(refreshRotation))
                 }
                 .buttonStyle(.plain)
             }

@@ -1,0 +1,176 @@
+{
+  "source": "/Users/caishilin/Desktop/personal/AiCash/AiCash/Views/DetailView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Refresh",
+        "location": {
+          "startingColumn": 19,
+          "startingLine": 92
+        }
+      },
+      {
+        "comment": "",
+        "key": "Usage Overview",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 100
+        }
+      },
+      {
+        "comment": "",
+        "key": "Daily Cost",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 166
+        }
+      },
+      {
+        "comment": "",
+        "key": "Date",
+        "location": {
+          "startingColumn": 31,
+          "startingLine": 173
+        }
+      },
+      {
+        "comment": "",
+        "key": "Cost",
+        "location": {
+          "startingColumn": 31,
+          "startingLine": 174
+        }
+      },
+      {
+        "comment": "",
+        "key": "$%@",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 180
+        }
+      },
+      {
+        "comment": "",
+        "key": "Time",
+        "location": {
+          "startingColumn": 31,
+          "startingLine": 206
+        }
+      },
+      {
+        "comment": "",
+        "key": "Usage",
+        "location": {
+          "startingColumn": 31,
+          "startingLine": 207
+        }
+      },
+      {
+        "comment": "",
+        "key": "Time",
+        "location": {
+          "startingColumn": 31,
+          "startingLine": 212
+        }
+      },
+      {
+        "comment": "",
+        "key": "Usage",
+        "location": {
+          "startingColumn": 31,
+          "startingLine": 213
+        }
+      },
+      {
+        "comment": "",
+        "key": "Recent Events",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 233
+        }
+      },
+      {
+        "comment": "",
+        "key": "Date",
+        "location": {
+          "startingColumn": 38,
+          "startingLine": 240
+        }
+      },
+      {
+        "comment": "",
+        "key": "Model",
+        "location": {
+          "startingColumn": 38,
+          "startingLine": 241
+        }
+      },
+      {
+        "comment": "",
+        "key": "In",
+        "location": {
+          "startingColumn": 38,
+          "startingLine": 242
+        }
+      },
+      {
+        "comment": "",
+        "key": "Out",
+        "location": {
+          "startingColumn": 42,
+          "startingLine": 244
+        }
+      },
+      {
+        "comment": "",
+        "key": "Cache",
+        "location": {
+          "startingColumn": 42,
+          "startingLine": 245
+        }
+      },
+      {
+        "comment": "",
+        "key": "Total",
+        "location": {
+          "startingColumn": 38,
+          "startingLine": 247
+        }
+      },
+      {
+        "comment": "",
+        "key": "Cost",
+        "location": {
+          "startingColumn": 38,
+          "startingLine": 248
+        }
+      },
+      {
+        "comment": "",
+        "key": "$/1M",
+        "location": {
+          "startingColumn": 42,
+          "startingLine": 250
+        }
+      },
+      {
+        "comment": "",
+        "key": "Unknown provider type",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 308
+        }
+      },
+      {
+        "comment": "",
+        "key": "/ %@",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 355
+        }
+      }
+    ]
+  },
+  "version": 1
+}

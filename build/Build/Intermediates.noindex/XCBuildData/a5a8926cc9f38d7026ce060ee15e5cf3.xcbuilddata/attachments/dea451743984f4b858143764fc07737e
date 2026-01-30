@@ -1,0 +1,80 @@
+{
+  "" : {
+    "const-values" : "/Users/caishilin/Desktop/personal/AiCash/build/Build/Intermediates.noindex/AiCash.build/Release/AiCash.build/Objects-normal/arm64/AiCash-master.swiftconstvalues",
+    "dependencies" : "/Users/caishilin/Desktop/personal/AiCash/build/Build/Intermediates.noindex/AiCash.build/Release/AiCash.build/Objects-normal/arm64/AiCash-master.d",
+    "diagnostics" : "/Users/caishilin/Desktop/personal/AiCash/build/Build/Intermediates.noindex/AiCash.build/Release/AiCash.build/Objects-normal/arm64/AiCash-master.dia",
+    "emit-module-dependencies" : "/Users/caishilin/Desktop/personal/AiCash/build/Build/Intermediates.noindex/AiCash.build/Release/AiCash.build/Objects-normal/arm64/AiCash-master-emit-module.d",
+    "emit-module-diagnostics" : "/Users/caishilin/Desktop/personal/AiCash/build/Build/Intermediates.noindex/AiCash.build/Release/AiCash.build/Objects-normal/arm64/AiCash-master-emit-module.dia",
+    "swift-dependencies" : "/Users/caishilin/Desktop/personal/AiCash/build/Build/Intermediates.noindex/AiCash.build/Release/AiCash.build/Objects-normal/arm64/AiCash-master.swiftdeps"
+  },
+  "/Users/caishilin/Desktop/personal/AiCash/AiCash/AiCashApp.swift" : {
+    "index-unit-output-path" : "/AiCash.build/Release/AiCash.build/Objects-normal/arm64/AiCashApp.o",
+    "llvm-bc" : "/Users/caishilin/Desktop/personal/AiCash/build/Build/Intermediates.noindex/AiCash.build/Release/AiCash.build/Objects-normal/arm64/AiCashApp.bc",
+    "object" : "/Users/caishilin/Desktop/personal/AiCash/build/Build/Intermediates.noindex/AiCash.build/Release/AiCash.build/Objects-normal/arm64/AiCashApp.o"
+  },
+  "/Users/caishilin/Desktop/personal/AiCash/AiCash/ContentView.swift" : {
+    "index-unit-output-path" : "/AiCash.build/Release/AiCash.build/Objects-normal/arm64/ContentView.o",
+    "llvm-bc" : "/Users/caishilin/Desktop/personal/AiCash/build/Build/Intermediates.noindex/AiCash.build/Release/AiCash.build/Objects-normal/arm64/ContentView.bc",
+    "object" : "/Users/caishilin/Desktop/personal/AiCash/build/Build/Intermediates.noindex/AiCash.build/Release/AiCash.build/Objects-normal/arm64/ContentView.o"
+  },
+  "/Users/caishilin/Desktop/personal/AiCash/AiCash/Models/AIProvider.swift" : {
+    "index-unit-output-path" : "/AiCash.build/Release/AiCash.build/Objects-normal/arm64/AIProvider.o",
+    "llvm-bc" : "/Users/caishilin/Desktop/personal/AiCash/build/Build/Intermediates.noindex/AiCash.build/Release/AiCash.build/Objects-normal/arm64/AIProvider.bc",
+    "object" : "/Users/caishilin/Desktop/personal/AiCash/build/Build/Intermediates.noindex/AiCash.build/Release/AiCash.build/Objects-normal/arm64/AIProvider.o"
+  },
+  "/Users/caishilin/Desktop/personal/AiCash/AiCash/Models/BLTProvider.swift" : {
+    "index-unit-output-path" : "/AiCash.build/Release/AiCash.build/Objects-normal/arm64/BLTProvider.o",
+    "llvm-bc" : "/Users/caishilin/Desktop/personal/AiCash/build/Build/Intermediates.noindex/AiCash.build/Release/AiCash.build/Objects-normal/arm64/BLTProvider.bc",
+    "object" : "/Users/caishilin/Desktop/personal/AiCash/build/Build/Intermediates.noindex/AiCash.build/Release/AiCash.build/Objects-normal/arm64/BLTProvider.o"
+  },
+  "/Users/caishilin/Desktop/personal/AiCash/AiCash/Models/CursorProvider.swift" : {
+    "index-unit-output-path" : "/AiCash.build/Release/AiCash.build/Objects-normal/arm64/CursorProvider.o",
+    "llvm-bc" : "/Users/caishilin/Desktop/personal/AiCash/build/Build/Intermediates.noindex/AiCash.build/Release/AiCash.build/Objects-normal/arm64/CursorProvider.bc",
+    "object" : "/Users/caishilin/Desktop/personal/AiCash/build/Build/Intermediates.noindex/AiCash.build/Release/AiCash.build/Objects-normal/arm64/CursorProvider.o"
+  },
+  "/Users/caishilin/Desktop/personal/AiCash/AiCash/Models/ZenMuxProvider.swift" : {
+    "index-unit-output-path" : "/AiCash.build/Release/AiCash.build/Objects-normal/arm64/ZenMuxProvider.o",
+    "llvm-bc" : "/Users/caishilin/Desktop/personal/AiCash/build/Build/Intermediates.noindex/AiCash.build/Release/AiCash.build/Objects-normal/arm64/ZenMuxProvider.bc",
+    "object" : "/Users/caishilin/Desktop/personal/AiCash/build/Build/Intermediates.noindex/AiCash.build/Release/AiCash.build/Objects-normal/arm64/ZenMuxProvider.o"
+  },
+  "/Users/caishilin/Desktop/personal/AiCash/AiCash/Utilities/LaunchAtLogin.swift" : {
+    "index-unit-output-path" : "/AiCash.build/Release/AiCash.build/Objects-normal/arm64/LaunchAtLogin.o",
+    "llvm-bc" : "/Users/caishilin/Desktop/personal/AiCash/build/Build/Intermediates.noindex/AiCash.build/Release/AiCash.build/Objects-normal/arm64/LaunchAtLogin.bc",
+    "object" : "/Users/caishilin/Desktop/personal/AiCash/build/Build/Intermediates.noindex/AiCash.build/Release/AiCash.build/Objects-normal/arm64/LaunchAtLogin.o"
+  },
+  "/Users/caishilin/Desktop/personal/AiCash/AiCash/Utilities/Logger.swift" : {
+    "index-unit-output-path" : "/AiCash.build/Release/AiCash.build/Objects-normal/arm64/Logger.o",
+    "llvm-bc" : "/Users/caishilin/Desktop/personal/AiCash/build/Build/Intermediates.noindex/AiCash.build/Release/AiCash.build/Objects-normal/arm64/Logger.bc",
+    "object" : "/Users/caishilin/Desktop/personal/AiCash/build/Build/Intermediates.noindex/AiCash.build/Release/AiCash.build/Objects-normal/arm64/Logger.o"
+  },
+  "/Users/caishilin/Desktop/personal/AiCash/AiCash/Utilities/StorageManager.swift" : {
+    "index-unit-output-path" : "/AiCash.build/Release/AiCash.build/Objects-normal/arm64/StorageManager.o",
+    "llvm-bc" : "/Users/caishilin/Desktop/personal/AiCash/build/Build/Intermediates.noindex/AiCash.build/Release/AiCash.build/Objects-normal/arm64/StorageManager.bc",
+    "object" : "/Users/caishilin/Desktop/personal/AiCash/build/Build/Intermediates.noindex/AiCash.build/Release/AiCash.build/Objects-normal/arm64/StorageManager.o"
+  },
+  "/Users/caishilin/Desktop/personal/AiCash/AiCash/Views/DetailView.swift" : {
+    "index-unit-output-path" : "/AiCash.build/Release/AiCash.build/Objects-normal/arm64/DetailView.o",
+    "llvm-bc" : "/Users/caishilin/Desktop/personal/AiCash/build/Build/Intermediates.noindex/AiCash.build/Release/AiCash.build/Objects-normal/arm64/DetailView.bc",
+    "object" : "/Users/caishilin/Desktop/personal/AiCash/build/Build/Intermediates.noindex/AiCash.build/Release/AiCash.build/Objects-normal/arm64/DetailView.o"
+  },
+  "/Users/caishilin/Desktop/personal/AiCash/AiCash/Views/ProviderListView.swift" : {
+    "index-unit-output-path" : "/AiCash.build/Release/AiCash.build/Objects-normal/arm64/ProviderListView.o",
+    "llvm-bc" : "/Users/caishilin/Desktop/personal/AiCash/build/Build/Intermediates.noindex/AiCash.build/Release/AiCash.build/Objects-normal/arm64/ProviderListView.bc",
+    "object" : "/Users/caishilin/Desktop/personal/AiCash/build/Build/Intermediates.noindex/AiCash.build/Release/AiCash.build/Objects-normal/arm64/ProviderListView.o"
+  },
+  "/Users/caishilin/Desktop/personal/AiCash/AiCash/Views/SettingsView.swift" : {
+    "index-unit-output-path" : "/AiCash.build/Release/AiCash.build/Objects-normal/arm64/SettingsView.o",
+    "llvm-bc" : "/Users/caishilin/Desktop/personal/AiCash/build/Build/Intermediates.noindex/AiCash.build/Release/AiCash.build/Objects-normal/arm64/SettingsView.bc",
+    "object" : "/Users/caishilin/Desktop/personal/AiCash/build/Build/Intermediates.noindex/AiCash.build/Release/AiCash.build/Objects-normal/arm64/SettingsView.o"
+  },
+  "/Users/caishilin/Desktop/personal/AiCash/AiCash/Views/StatusMenuView.swift" : {
+    "index-unit-output-path" : "/AiCash.build/Release/AiCash.build/Objects-normal/arm64/StatusMenuView.o",
+    "llvm-bc" : "/Users/caishilin/Desktop/personal/AiCash/build/Build/Intermediates.noindex/AiCash.build/Release/AiCash.build/Objects-normal/arm64/StatusMenuView.bc",
+    "object" : "/Users/caishilin/Desktop/personal/AiCash/build/Build/Intermediates.noindex/AiCash.build/Release/AiCash.build/Objects-normal/arm64/StatusMenuView.o"
+  },
+  "/Users/caishilin/Desktop/personal/AiCash/build/Build/Intermediates.noindex/AiCash.build/Release/AiCash.build/DerivedSources/GeneratedAssetSymbols.swift" : {
+    "index-unit-output-path" : "/AiCash.build/Release/AiCash.build/Objects-normal/arm64/GeneratedAssetSymbols.o",
+    "llvm-bc" : "/Users/caishilin/Desktop/personal/AiCash/build/Build/Intermediates.noindex/AiCash.build/Release/AiCash.build/Objects-normal/arm64/GeneratedAssetSymbols.bc",
+    "object" : "/Users/caishilin/Desktop/personal/AiCash/build/Build/Intermediates.noindex/AiCash.build/Release/AiCash.build/Objects-normal/arm64/GeneratedAssetSymbols.o"
+  }
+}

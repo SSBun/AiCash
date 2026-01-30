@@ -13,10 +13,16 @@ protocol AIProviderProtocol: ObservableObject, Identifiable {
     var symbol: String { get }
     var fullName: String { get set }
     var balance: Double { get }
-    var change: Double { get }
+    var todayUsage: Double { get }
     var usageHistory: [ProviderUsage] { get }
     var isLoading: Bool { get }
     var errorMessage: String? { get }
+    
+    // New fields for detailed usage
+    var includedUsage: Double { get }
+    var includedLimit: Double { get }
+    var onDemandUsage: Double { get }
+    var usageEvents: [UsageEvent] { get }
     
     func login() async
     func setCookies(_ cookieString: String)
@@ -24,15 +30,61 @@ protocol AIProviderProtocol: ObservableObject, Identifiable {
     func fetchData() async
 }
 
+struct UsageEvent: Identifiable, Hashable {
+    let id = UUID()
+    let date: String
+    let user: String
+    let type: String
+    let model: String
+    let inputTokens: Int
+    let outputTokens: Int
+    let cacheTokens: Int
+    let cost: Double // This will be totalCents + cursorTokenFee
+    
+    var totalTokens: Int {
+        inputTokens + outputTokens + cacheTokens
+    }
+    
+    func formatTokens(_ count: Int) -> String {
+        if count >= 1_000_000 {
+            return String(format: "%.1fM", Double(count) / 1_000_000.0)
+        } else if count >= 1_000 {
+            return String(format: "%.1fK", Double(count) / 1_000.0)
+        } else {
+            return "\(count)"
+        }
+    }
+    
+    var inputTokensFormatted: String { formatTokens(inputTokens) }
+    var outputTokensFormatted: String { formatTokens(outputTokens) }
+    var cacheTokensFormatted: String { formatTokens(cacheTokens) }
+    var totalTokensFormatted: String { formatTokens(totalTokens) }
+    
+    var costFormatted: String {
+        return "$\(String(format: "%.5f", cost / 100.0))"
+    }
+    
+    var pricePerMillion: String {
+        guard totalTokens > 0 else { return "-" }
+        let price = (cost / Double(totalTokens)) * 1_000_000.0
+        return "$\(String(format: "%.2f", price / 100.0))"
+    }
+}
+
 extension AIProviderProtocol {
+    var todayUsage: Double { 0.0 }
+    var includedUsage: Double { 0.0 }
+    var includedLimit: Double { 0.0 }
+    var onDemandUsage: Double { 0.0 }
+    var usageEvents: [UsageEvent] { [] }
+    
     func setCookies(_ cookieString: String) {}
     func getCookieString() -> String { "" }
 }
 
 extension AIProviderProtocol {
-    var changeString: String {
-        let sign = change >= 0 ? "+" : ""
-        return "\(sign)\(String(format: "%.2f", change))"
+    var todayUsageString: String {
+        return "$\(String(format: "%.2f", todayUsage))"
     }
     
     var balanceString: String {
@@ -40,42 +92,8 @@ extension AIProviderProtocol {
     }
 }
 
-class MockAIProvider: AIProviderProtocol, Hashable {
-    let id = UUID()
-    @Published var name: String
-    @Published var symbol: String
-    @Published var fullName: String
-    @Published var balance: Double
-    @Published var change: Double
-    @Published var usageHistory: [ProviderUsage]
-    @Published var isLoading: Bool = false
-    @Published var errorMessage: String? = nil
-    
-    init(name: String, symbol: String, fullName: String, balance: Double, change: Double, usageHistory: [ProviderUsage]) {
-        self.name = name
-        self.symbol = symbol
-        self.fullName = fullName
-        self.balance = balance
-        self.change = change
-        self.usageHistory = usageHistory
-    }
-    
-    func fetchData() async {
-        // Mock fetch
-    }
-    
-    func login() async {
-        // Mock login
-    }
-    
-    static func == (lhs: MockAIProvider, rhs: MockAIProvider) -> Bool {
-        lhs.id == rhs.id
-    }
-    
-    func hash(into hasher: inout Hasher) {
-        hasher.combine(id)
-    }
-}
+private let refreshIntervalKey = "refreshInterval"
+private let defaultRefreshIntervalMinutes = 30
 
 class ProviderViewModel: ObservableObject {
     static let shared = ProviderViewModel()
@@ -87,11 +105,50 @@ class ProviderViewModel: ObservableObject {
     }
     @Published var selectedProvider: (any AIProviderProtocol)?
     
+    private var refreshTimer: Timer?
+    private var lastRefreshTime: Date?
+    
     init() {
         self.providers = StorageManager.shared.loadProviders()
         if let first = providers.first {
             self.selectedProvider = first
         }
+        
+        // Refresh all providers on startup
+        Task {
+            await refreshAll()
+        }
+        
+        startRefreshTimer()
+    }
+    
+    deinit {
+        refreshTimer?.invalidate()
+        refreshTimer = nil
+    }
+    
+    /// Reads the refresh interval (minutes) from UserDefaults; same key as Settings @AppStorage.
+    private func refreshIntervalMinutes() -> Int {
+        let value = UserDefaults.standard.object(forKey: refreshIntervalKey) as? Int
+        let minutes = value ?? defaultRefreshIntervalMinutes
+        return minutes > 0 ? minutes : defaultRefreshIntervalMinutes
+    }
+    
+    /// Starts a timer that checks every minute and triggers refresh when the configured interval has passed.
+    private func startRefreshTimer() {
+        refreshTimer?.invalidate()
+        refreshTimer = Timer.scheduledTimer(withTimeInterval: 60, repeats: true) { [weak self] _ in
+            guard let self = self else { return }
+            let intervalMinutes = self.refreshIntervalMinutes()
+            let intervalSeconds = TimeInterval(intervalMinutes * 60)
+            let now = Date()
+            if let last = self.lastRefreshTime {
+                guard now.timeIntervalSince(last) >= intervalSeconds else { return }
+            }
+            self.lastRefreshTime = now
+            Task { await self.refreshAll() }
+        }
+        RunLoop.main.add(refreshTimer!, forMode: .common)
     }
     
     func addProvider(_ provider: any AIProviderProtocol) {
@@ -117,8 +174,12 @@ class ProviderViewModel: ObservableObject {
         for provider in providers {
             await provider.fetchData()
         }
+        await MainActor.run {
+            lastRefreshTime = Date()
+        }
         Log.info("All providers refreshed.")
     }
 }
+
 
 

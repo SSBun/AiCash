@@ -1,0 +1,16 @@
+{
+  "source": "/Users/caishilin/Desktop/personal/AiCash/AiCash/AiCashApp.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "AiCash",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 21
+        }
+      }
+    ]
+  },
+  "version": 1
+}

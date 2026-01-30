@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>logFormatVersion</key>
+	<integer>11</integer>
+	<key>logs</key>
+	<dict>
+		<key>7C5885E6-C325-4CA5-AD99-FC48BF92C062</key>
+		<dict>
+			<key>className</key>
+			<string>IDECommandLineBuildLog</string>
+			<key>documentTypeString</key>
+			<string>&lt;nil&gt;</string>
+			<key>domainType</key>
+			<string>Xcode.IDEActivityLogDomainType.BuildLog</string>
+			<key>fileName</key>
+			<string>7C5885E6-C325-4CA5-AD99-FC48BF92C062.xcactivitylog</string>
+			<key>hasPrimaryLog</key>
+			<true/>
+			<key>primaryObservable</key>
+			<dict>
+				<key>highLevelStatus</key>
+				<string>S</string>
+				<key>totalNumberOfAnalyzerIssues</key>
+				<integer>0</integer>
+				<key>totalNumberOfErrors</key>
+				<integer>0</integer>
+				<key>totalNumberOfTestFailures</key>
+				<integer>0</integer>
+				<key>totalNumberOfWarnings</key>
+				<integer>0</integer>
+			</dict>
+			<key>schemeIdentifier-containerName</key>
+			<string>AiCash project</string>
+			<key>schemeIdentifier-schemeName</key>
+			<string>AiCash</string>
+			<key>schemeIdentifier-sharedScheme</key>
+			<integer>1</integer>
+			<key>signature</key>
+			<string>Cleaning project AiCash with scheme AiCash and configuration Release</string>
+			<key>timeStartedRecording</key>
+			<real>791432232.05916595</real>
+			<key>timeStoppedRecording</key>
+			<real>791432232.26117599</real>
+			<key>title</key>
+			<string>Cleaning project AiCash with scheme AiCash and configuration Release</string>
+			<key>uniqueIdentifier</key>
+			<string>7C5885E6-C325-4CA5-AD99-FC48BF92C062</string>
+		</dict>
+	</dict>
+</dict>
+</plist>

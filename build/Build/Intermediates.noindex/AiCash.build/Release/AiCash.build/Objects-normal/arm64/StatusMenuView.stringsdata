@@ -1,0 +1,16 @@
+{
+  "source": "/Users/caishilin/Desktop/personal/AiCash/AiCash/Views/StatusMenuView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Refreshing...",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 13
+        }
+      }
+    ]
+  },
+  "version": 1
+}

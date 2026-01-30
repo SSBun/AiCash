@@ -19,9 +19,11 @@ class StorageManager {
     func saveProviders(_ providers: [any AIProviderProtocol]) {
         let codableProviders = providers.compactMap { provider -> ProviderData? in
             if let cursor = provider as? CursorProvider {
-                return ProviderData(type: .cursor, name: cursor.name, fullName: cursor.fullName, symbol: cursor.symbol, cookies: cursor.getCookieString())
-            } else if let mock = provider as? MockAIProvider {
-                return ProviderData(type: .mock, name: mock.name, fullName: mock.fullName, symbol: mock.symbol, cookies: nil)
+                return ProviderData(type: .cursor, name: cursor.name, fullName: cursor.fullName, symbol: cursor.symbol, cookies: cursor.getCookieString(), userId: nil, token: nil, curlCommand: nil)
+            } else if let blt = provider as? BLTProvider {
+                return ProviderData(type: .blt, name: blt.name, fullName: blt.fullName, symbol: blt.symbol, cookies: nil, userId: blt.userId, token: blt.token, curlCommand: nil)
+            } else if let zenmux = provider as? ZenMuxProvider {
+                return ProviderData(type: .zenmux, name: zenmux.name, fullName: zenmux.fullName, symbol: zenmux.symbol, cookies: nil, userId: nil, token: zenmux.token, curlCommand: zenmux.curlCommand)
             }
             return nil
         }
@@ -51,15 +53,20 @@ class StorageManager {
                         provider.setCookies(cookies)
                     }
                     return provider
-                case .mock:
-                    return MockAIProvider(
-                        name: data.name,
-                        symbol: data.symbol,
-                        fullName: data.fullName,
-                        balance: 0.0,
-                        change: 0.0,
-                        usageHistory: []
-                    )
+                case .blt:
+                    let provider = BLTProvider()
+                    provider.name = data.name
+                    provider.fullName = data.fullName
+                    provider.userId = data.userId ?? ""
+                    provider.token = data.token ?? ""
+                    return provider
+                case .zenmux:
+                    let provider = ZenMuxProvider()
+                    provider.name = data.name
+                    provider.fullName = data.fullName
+                    provider.token = data.token ?? ""
+                    provider.curlCommand = data.curlCommand ?? ""
+                    return provider
                 }
             }
         } catch {
@@ -71,7 +78,8 @@ class StorageManager {
 
 enum ProviderType: String, Codable {
     case cursor
-    case mock
+    case blt
+    case zenmux
 }
 
 struct ProviderData: Codable {
@@ -80,4 +88,7 @@ struct ProviderData: Codable {
     let fullName: String
     let symbol: String
     let cookies: String?
+    let userId: String?
+    let token: String?
+    let curlCommand: String?
 }

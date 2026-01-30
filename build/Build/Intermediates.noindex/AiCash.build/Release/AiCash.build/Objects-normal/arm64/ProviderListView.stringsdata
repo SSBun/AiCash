@@ -1,0 +1,32 @@
+{
+  "source": "/Users/caishilin/Desktop/personal/AiCash/AiCash/Views/ProviderListView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Unknown",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 60
+        }
+      },
+      {
+        "comment": "",
+        "key": "Search",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 75
+        }
+      },
+      {
+        "comment": "",
+        "key": "Providers",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 86
+        }
+      }
+    ]
+  },
+  "version": 1
+}
