@@ -98,7 +98,7 @@ class StatusBarController: ObservableObject {
         let contentView = ContentView()
         let hostingController = NSHostingController(rootView: contentView)
         let window = NSWindow(contentViewController: hostingController)
-        window.setContentSize(NSSize(width: 1000, height: 700))
+        window.setContentSize(NSSize(width: 1200, height: 800))
         window.center()
         window.makeKeyAndOrderFront(nil)
     }

@@ -15,7 +15,7 @@ struct AiCashApp: App {
     var body: some Scene {
         WindowGroup(id: "main") {
             ContentView()
-                .frame(minWidth: 1000, minHeight: 700)
+                .frame(minWidth: 1200, minHeight: 800)
         }
         .windowStyle(.hiddenTitleBar)
         .commands {
