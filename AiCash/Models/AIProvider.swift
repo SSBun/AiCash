@@ -176,6 +176,7 @@ class ProviderViewModel: ObservableObject {
         }
         await MainActor.run {
             lastRefreshTime = Date()
+            NotificationCenter.default.post(name: NSNotification.Name("ProvidersUpdated"), object: nil)
         }
         Log.info("All providers refreshed.")
     }

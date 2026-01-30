@@ -98,11 +98,11 @@ class BLTProvider: NSObject, AIProviderProtocol, ObservableObject {
     
     private func fetchHistory() async throws {
         let now = Int(Date().timeIntervalSince1970)
-        let sevenDaysAgo = now - (7 * 24 * 60 * 60)
+        let historyStartTime = now - (Constants.AccountHistoryRange * 24 * 60 * 60)
         
         var components = URLComponents(string: historyEndpoint)!
         components.queryItems = [
-            URLQueryItem(name: "start_timestamp", value: "\(sevenDaysAgo)"),
+            URLQueryItem(name: "start_timestamp", value: "\(historyStartTime)"),
             URLQueryItem(name: "end_timestamp", value: "\(now)"),
             URLQueryItem(name: "default_time", value: "day")
         ]

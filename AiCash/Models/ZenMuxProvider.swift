@@ -185,10 +185,59 @@ class ZenMuxProvider: NSObject, AIProviderProtocol, ObservableObject {
     }
     
     private func fetchHistoryRecords(ctoken: String) async throws {
+        var allEvents: [ZenMuxHistoryItem] = []
+        var currentPage = 1
+        let targetCount = Constants.HistoryPageLimit
+        
+        while allEvents.count < targetCount {
+            let pageEvents = try await fetchHistoryPage(ctoken: ctoken, page: currentPage)
+            if pageEvents.isEmpty { break }
+            
+            allEvents.append(contentsOf: pageEvents)
+            currentPage += 1
+            
+            // Prevent infinite loop
+            if currentPage > 10 { break }
+        }
+        
+        await MainActor.run {
+            // Group by date to show daily usage in the chart
+            let calendar = Calendar.current
+            var dailyUsage: [Date: Double] = [:]
+            
+            for item in allEvents.prefix(targetCount) {
+                let startOfDay = calendar.startOfDay(for: item.createdAt)
+                let amount = Double(item.billAmount) ?? 0.0
+                dailyUsage[startOfDay, default: 0] += amount
+            }
+            
+            self.usageHistory = dailyUsage.map { date, amount in
+                ProviderUsage(date: date, amount: amount)
+            }.sorted(by: { $0.date < $1.date })
+            
+            self.usageEvents = Array(allEvents.prefix(targetCount)).map { item in
+                let cost = Double(item.billAmount) ?? 0.0
+                return UsageEvent(
+                    date: self.formatDateForEvent(item.createdAt),
+                    user: item.providerSlug,
+                    type: "Chat",
+                    model: item.modelSlug,
+                    inputTokens: item.tokensPrompt,
+                    outputTokens: item.tokensCompletion,
+                    cacheTokens: 0,
+                    cost: cost * 100.0 // cost is in USD, UsageEvent expects cents
+                )
+            }
+            
+            Log.info("[ZenMux] History records fetch successful. Points: \(self.usageHistory.count), Events: \(self.usageEvents.count)")
+        }
+    }
+    
+    private func fetchHistoryPage(ctoken: String, page: Int) async throws -> [ZenMuxHistoryItem] {
         var components = URLComponents(string: historyEndpoint)!
         components.queryItems = [URLQueryItem(name: "ctoken", value: ctoken)]
         
-        guard let url = components.url else { return }
+        guard let url = components.url else { return [] }
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.addValue("application/json", forHTTPHeaderField: "Content-Type")
@@ -201,14 +250,14 @@ class ZenMuxProvider: NSObject, AIProviderProtocol, ObservableObject {
         request.addValue("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36", forHTTPHeaderField: "User-Agent")
         
         let now = Int(Date().timeIntervalSince1970 * 1000)
-        let start = now - (7 * 24 * 60 * 60 * 1000) // 7 days ago
+        let start = now - (Constants.AccountHistoryRange * 24 * 60 * 60 * 1000)
         
         let body: [String: Any] = [
             "apiKeys": [],
             "startTime": start,
             "stopTime": now,
-            "pageNo": 1,
-            "pageSize": 100,
+            "pageNo": page,
+            "pageSize": 50, // Use smaller page size for API compatibility
             "modelSlugs": [],
             "providerSlugs": [],
             "finishReasons": []
@@ -218,7 +267,7 @@ class ZenMuxProvider: NSObject, AIProviderProtocol, ObservableObject {
         
         let (data, response) = try await URLSession.shared.data(for: request)
         guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
-            return
+            return []
         }
         
         let decoder = JSONDecoder()
@@ -227,40 +276,7 @@ class ZenMuxProvider: NSObject, AIProviderProtocol, ObservableObject {
         decoder.dateDecodingStrategy = .formatted(isoFormatter)
         
         let historyResponse = try decoder.decode(ZenMuxHistoryResponse.self, from: data)
-        
-                if historyResponse.success {
-            await MainActor.run {
-                // Group by date to show daily usage in the chart
-                let calendar = Calendar.current
-                var dailyUsage: [Date: Double] = [:]
-                
-                for item in historyResponse.data {
-                    let startOfDay = calendar.startOfDay(for: item.createdAt)
-                    let amount = Double(item.billAmount) ?? 0.0
-                    dailyUsage[startOfDay, default: 0] += amount
-                }
-                
-                self.usageHistory = dailyUsage.map { date, amount in
-                    ProviderUsage(date: date, amount: amount)
-                }.sorted(by: { $0.date < $1.date })
-                
-                self.usageEvents = historyResponse.data.map { item in
-                    let cost = Double(item.billAmount) ?? 0.0
-                    return UsageEvent(
-                        date: self.formatDateForEvent(item.createdAt),
-                        user: item.providerSlug,
-                        type: "Chat",
-                        model: item.modelSlug,
-                        inputTokens: item.tokensPrompt,
-                        outputTokens: item.tokensCompletion,
-                        cacheTokens: 0,
-                        cost: cost * 100.0 // cost is in USD, UsageEvent expects cents
-                    )
-                }
-                
-                Log.info("[ZenMux] History records fetch successful. Points: \(self.usageHistory.count), Events: \(self.usageEvents.count)")
-            }
-        }
+        return historyResponse.success ? historyResponse.data : []
     }
     
     private func constructCookieHeader(ctoken: String) -> String {

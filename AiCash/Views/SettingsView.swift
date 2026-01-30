@@ -43,6 +43,8 @@ struct NormalSettingsView: View {
         }
     }
     @AppStorage("refreshInterval") private var refreshInterval = 30
+    @AppStorage("accountHistoryRange") private var accountHistoryRange = 30
+    @AppStorage("historyPageLimit") private var historyPageLimit = 100
     
     var body: some View {
         ScrollView {
@@ -68,8 +70,35 @@ struct NormalSettingsView: View {
                 Divider()
                 
                 VStack(alignment: .leading, spacing: 12) {
-                    Text("Refresh")
+                    Text("Data")
                         .font(.system(size: 13, weight: .semibold))
+                    
+                    HStack {
+                        Text("History Range (days)")
+                            .font(.system(size: 13))
+                        Spacer()
+                        Picker("", selection: $accountHistoryRange) {
+                            Text("7").tag(7)
+                            Text("14").tag(14)
+                            Text("30").tag(30)
+                            Text("60").tag(60)
+                            Text("90").tag(90)
+                        }
+                        .frame(width: 80)
+                    }
+                    
+                    HStack {
+                        Text("Page Limit (records)")
+                            .font(.system(size: 13))
+                        Spacer()
+                        Picker("", selection: $historyPageLimit) {
+                            Text("50").tag(50)
+                            Text("100").tag(100)
+                            Text("200").tag(200)
+                            Text("500").tag(500)
+                        }
+                        .frame(width: 80)
+                    }
                     
                     HStack {
                         Text("Refresh Interval (minutes)")

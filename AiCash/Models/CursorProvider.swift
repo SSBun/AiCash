@@ -119,7 +119,65 @@ class CursorProvider: NSObject, AIProviderProtocol, ObservableObject {
     }
     
     private func fetchUsageEvents() async throws {
-        guard let url = URL(string: eventsEndpoint) else { return }
+        var allEvents: [CursorUsageEvent] = []
+        var currentPage = 1
+        let targetCount = Constants.HistoryPageLimit
+        
+        while allEvents.count < targetCount {
+            let pageEvents = try await fetchUsageEventsPage(page: currentPage)
+            if pageEvents.isEmpty { break }
+            
+            allEvents.append(contentsOf: pageEvents)
+            currentPage += 1
+            
+            // Prevent infinite loop
+            if currentPage > 10 { break }
+        }
+        
+        await MainActor.run {
+            var totalTodayCents = 0.0
+            let calendar = Calendar.current
+            
+            self.usageEvents = Array(allEvents.prefix(targetCount)).map { event in
+                let timestampMs = Double(event.timestamp) ?? 0
+                let eventDate = Date(timeIntervalSince1970: timestampMs / 1000.0)
+                
+                let tokenCents = event.tokenUsage?.totalCents ?? 0.0
+                let feeCents = event.cursorTokenFee ?? 0.0
+                let totalCents = tokenCents + feeCents
+                
+                if calendar.isDateInToday(eventDate) {
+                    totalTodayCents += totalCents
+                }
+                
+                return UsageEvent(
+                    date: self.formatDate(eventDate),
+                    user: event.owningUser,
+                    type: event.kind,
+                    model: event.model,
+                    inputTokens: event.tokenUsage?.inputTokens ?? 0,
+                    outputTokens: event.tokenUsage?.outputTokens ?? 0,
+                    cacheTokens: event.tokenUsage?.cacheReadTokens ?? 0,
+                    cost: totalCents
+                )
+            }
+            
+            self.todayUsage = totalTodayCents / 100.0
+            
+            // Map events to usage history for the sparkline/chart
+            self.usageHistory = Array(allEvents.prefix(targetCount)).compactMap { event in
+                let timestampMs = Double(event.timestamp) ?? 0
+                let date = Date(timeIntervalSince1970: timestampMs / 1000.0)
+                let totalCents = (event.tokenUsage?.totalCents ?? 0.0) + (event.cursorTokenFee ?? 0.0)
+                return ProviderUsage(date: date, amount: totalCents / 100.0)
+            }.sorted(by: { $0.date < $1.date })
+            
+            Log.info("[Cursor] Successfully loaded \(self.usageEvents.count) events. Today's usage: \(self.todayUsageString)")
+        }
+    }
+    
+    private func fetchUsageEventsPage(page: Int) async throws -> [CursorUsageEvent] {
+        guard let url = URL(string: eventsEndpoint) else { return [] }
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.addValue("application/json", forHTTPHeaderField: "Content-Type")
@@ -136,69 +194,29 @@ class CursorProvider: NSObject, AIProviderProtocol, ObservableObject {
         let userId = 203422354
         
         let now = Int(Date().timeIntervalSince1970 * 1000)
-        let start = now - (30 * 24 * 60 * 60 * 1000) // 30 days ago
+        let start = now - (Constants.AccountHistoryRange * 24 * 60 * 60 * 1000)
         
         let body: [String: Any] = [
             "teamId": teamId,
             "startDate": "\(start)",
             "endDate": "\(now)",
             "userId": userId,
-            "page": 1,
-            "pageSize": 100
+            "page": page,
+            "pageSize": 50 // Use smaller page size for API compatibility
         ]
         
         request.httpBody = try? JSONSerialization.data(withJSONObject: body)
         
-        Log.info("[Cursor] Fetching events with body: \(body)")
-        
         let (data, response) = try await URLSession.shared.data(for: request)
         guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
-            return
+            return []
         }
         
         let decoder = JSONDecoder()
         if let eventsResponse = try? decoder.decode(CursorUsageEventsResponse.self, from: data) {
-            await MainActor.run {
-                var totalTodayCents = 0.0
-                let calendar = Calendar.current
-                
-                self.usageEvents = eventsResponse.usageEventsDisplay.map { event in
-                    let timestampMs = Double(event.timestamp) ?? 0
-                    let eventDate = Date(timeIntervalSince1970: timestampMs / 1000.0)
-                    
-                    let tokenCents = event.tokenUsage?.totalCents ?? 0.0
-                    let feeCents = event.cursorTokenFee ?? 0.0
-                    let totalCents = tokenCents + feeCents
-                    
-                    if calendar.isDateInToday(eventDate) {
-                        totalTodayCents += totalCents
-                    }
-                    
-                    return UsageEvent(
-                        date: self.formatDate(eventDate),
-                        user: event.owningUser,
-                        type: event.kind,
-                        model: event.model,
-                        inputTokens: event.tokenUsage?.inputTokens ?? 0,
-                        outputTokens: event.tokenUsage?.outputTokens ?? 0,
-                        cacheTokens: event.tokenUsage?.cacheReadTokens ?? 0,
-                        cost: totalCents
-                    )
-                }
-                
-                self.todayUsage = totalTodayCents / 100.0
-                
-                // Map events to usage history for the sparkline/chart
-                self.usageHistory = eventsResponse.usageEventsDisplay.compactMap { event in
-                    let timestampMs = Double(event.timestamp) ?? 0
-                    let date = Date(timeIntervalSince1970: timestampMs / 1000.0)
-                    let totalCents = (event.tokenUsage?.totalCents ?? 0.0) + (event.cursorTokenFee ?? 0.0)
-                    return ProviderUsage(date: date, amount: totalCents / 100.0)
-                }.sorted(by: { $0.date < $1.date })
-                
-                Log.info("[Cursor] Successfully loaded \(self.usageEvents.count) events. Today's usage: \(self.todayUsageString)")
-            }
+            return eventsResponse.usageEventsDisplay
         }
+        return []
     }
     
     private func formatDate(_ date: Date) -> String {

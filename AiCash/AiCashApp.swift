@@ -24,6 +24,7 @@ struct AiCashApp: App {
         
         Settings {
             SettingsView(viewModel: viewModel)
+                .background(.ultraThinMaterial)
         }
     }
 }

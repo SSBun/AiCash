@@ -23,11 +23,11 @@ struct ContentView: View {
                         .foregroundColor(.gray)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .background(Color(red: 0.05, green: 0.05, blue: 0.05))
             }
         }
         .navigationSplitViewStyle(.balanced)
         .preferredColorScheme(.dark)
+        .background(.ultraThinMaterial)
         .onChange(of: viewModel.selectedProvider?.id) { _, newValue in
             if newValue != nil {
                 columnVisibility = .all

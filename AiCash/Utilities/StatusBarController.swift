@@ -9,6 +9,15 @@ class StatusBarController: ObservableObject {
     init(viewModel: ProviderViewModel) {
         self.viewModel = viewModel
         setupStatusItem()
+        updateStatusTitle()
+        
+        // Observe provider changes to update the title
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(updateStatusTitle),
+            name: NSNotification.Name("ProvidersUpdated"),
+            object: nil
+        )
     }
     
     private func setupStatusItem() {
@@ -16,9 +25,18 @@ class StatusBarController: ObservableObject {
         
         if let button = statusItem?.button {
             button.image = NSImage(systemSymbolName: "dollarsign.circle", accessibilityDescription: "AiCash")
+            button.imagePosition = .imageLeading
             button.action = #selector(statusItemClicked(_:))
             button.sendAction(on: [.leftMouseUp, .rightMouseUp])
             button.target = self
+        }
+    }
+    
+    @objc private func updateStatusTitle() {
+        if let button = statusItem?.button,
+           let firstProvider = viewModel.providers.first {
+            button.title = " \(firstProvider.todayUsageString)"
+            button.font = NSFont.menuBarFont(ofSize: 0) // Use system menu bar font size
         }
     }
     
