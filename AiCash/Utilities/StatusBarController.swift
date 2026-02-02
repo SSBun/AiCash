@@ -18,6 +18,14 @@ class StatusBarController: ObservableObject {
             name: NSNotification.Name("ProvidersUpdated"),
             object: nil
         )
+        
+        // Observe app focus changes to close popover
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(applicationDidResignActive),
+            name: NSApplication.didResignActiveNotification,
+            object: nil
+        )
     }
     
     private func setupStatusItem() {
@@ -76,9 +84,13 @@ class StatusBarController: ObservableObject {
         let popover = NSPopover()
         popover.contentSize = NSSize(width: 280, height: 400)
         popover.behavior = .transient
+        popover.animates = true
         popover.contentViewController = NSHostingController(rootView: StatusMenuView(viewModel: viewModel))
         popover.show(relativeTo: sender.bounds, of: sender, preferredEdge: .minY)
         self.popover = popover
+        
+        // Make the popover close when clicking outside
+        NSApp.activate(ignoringOtherApps: false)
     }
     
     @objc private func showMainWindow() {
@@ -105,5 +117,11 @@ class StatusBarController: ObservableObject {
     
     @objc private func quitApp() {
         NSApplication.shared.terminate(nil)
+    }
+    
+    @objc private func applicationDidResignActive() {
+        if let popover = popover, popover.isShown {
+            popover.performClose(nil)
+        }
     }
 }
