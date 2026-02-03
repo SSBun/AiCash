@@ -26,7 +26,8 @@ struct StatusMenuView: View {
             }
         }
         .frame(width: 280)
-        .background(Color(nsColor: .windowBackgroundColor))
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 8))
+        .environment(\.colorScheme, .dark)
         .onAppear {
             isRefreshing = true
             Task { @MainActor in
