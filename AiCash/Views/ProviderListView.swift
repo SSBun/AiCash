@@ -56,8 +56,76 @@ struct ProviderRowWrapper: View {
             ProviderRow(provider: blt, isSelected: isSelected)
         } else if let zenmux = provider as? ZenMuxProvider {
             ProviderRow(provider: zenmux, isSelected: isSelected)
+        } else if let minimax = provider as? MiniMaxProvider {
+            MiniMaxRow(provider: minimax, isSelected: isSelected)
         } else {
             Text("Unknown")
+        }
+    }
+}
+
+struct MiniMaxRow: View {
+    @ObservedObject var provider: MiniMaxProvider
+    let isSelected: Bool
+
+    var body: some View {
+        HStack(spacing: 12) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(provider.name)
+                    .font(.system(size: 16, weight: .bold))
+                    .foregroundColor(.white)
+                Text(provider.symbol)
+                    .font(.system(size: 12))
+                    .foregroundColor(.gray)
+            }
+
+            Spacer()
+
+            if !provider.modelRemains.isEmpty {
+                VStack(alignment: .trailing, spacing: 2) {
+                    HStack(spacing: 4) {
+                        Text("\(provider.remainingChats)")
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundColor(.white)
+                        Text("left")
+                            .font(.system(size: 12))
+                            .foregroundColor(.gray)
+                    }
+
+                    Text("\(Int(provider.modelRemains.first?.remainingPercent ?? 0))%")
+                        .font(.system(size: 12, weight: .bold))
+                        .frame(width: 64)
+                        .padding(.vertical, 2)
+                        .background(remainingColor)
+                        .cornerRadius(4)
+                        .foregroundColor(.white)
+                }
+            } else {
+                VStack(alignment: .trailing, spacing: 2) {
+                    Text("--")
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundColor(.white)
+                    Text("No data")
+                        .font(.system(size: 12))
+                        .foregroundColor(.gray)
+                }
+            }
+        }
+        .frame(height: 48)
+        .padding(.vertical, 4)
+        .padding(.horizontal, 12)
+        .background(isSelected ? Color.white.opacity(0.1) : Color.clear)
+        .cornerRadius(8)
+    }
+
+    private var remainingColor: Color {
+        let percent = provider.modelRemains.first?.remainingPercent ?? 0
+        if percent > 50 {
+            return .green
+        } else if percent > 20 {
+            return .orange
+        } else {
+            return .red
         }
     }
 }

@@ -24,9 +24,22 @@ class MiniMaxProvider: NSObject, AIProviderProtocol, ObservableObject {
     @Published var totalChats: Int = 0
     @Published var modelRemains: [ModelRemain] = []
 
+    // Time window info
+    @Published var currentPeriodStart: Date?
+    @Published var currentPeriodEnd: Date?
+
     @Published var curlCommand: String = ""
 
     private let apiEndpoint = "https://www.minimaxi.com/v1/api/openplatform/coding_plan/remains"
+
+    // Override balanceString to show chat count instead of currency
+    var balanceString: String {
+        return "\(remainingChats)"
+    }
+
+    var todayUsageString: String {
+        return "\(totalChats - remainingChats) used"
+    }
 
     func login() async {
         Log.info("[MiniMax] Login method called.")
@@ -159,12 +172,16 @@ class MiniMaxProvider: NSObject, AIProviderProtocol, ObservableObject {
         await MainActor.run {
             if let modelRemains = miniMaxResponse.modelRemains, !modelRemains.isEmpty {
                 self.modelRemains = modelRemains
-                // Use the first model's data for display
+                // Use the first model's data for display (they all share the same time window)
                 if let first = modelRemains.first {
                     self.totalChats = first.currentIntervalTotalCount
-                    self.remainingChats = first.currentIntervalTotalCount - first.currentIntervalUsageCount
-                    // For display purposes, we treat remaining chats as "balance"
+                    // current_interval_usage_count is the remaining count available to use
+                    self.remainingChats = first.currentIntervalUsageCount
                     self.balance = Double(self.remainingChats)
+
+                    // Set time window (timestamps are in milliseconds)
+                    self.currentPeriodStart = Date(timeIntervalSince1970: Double(first.startTime) / 1000.0)
+                    self.currentPeriodEnd = Date(timeIntervalSince1970: Double(first.endTime) / 1000.0)
                 }
             }
             Log.info("[MiniMax] Remaining chats: \(self.remainingChats) / \(self.totalChats)")
@@ -183,7 +200,7 @@ struct MiniMaxResponse: Codable {
     }
 }
 
-struct ModelRemain: Codable {
+struct ModelRemain: Codable, Identifiable {
     let startTime: Int64
     let endTime: Int64
     let remainsTime: Int64
@@ -200,8 +217,45 @@ struct ModelRemain: Codable {
         case modelName = "model_name"
     }
 
+    var id: String { modelName }
+
+    // currentIntervalUsageCount is the remaining count available to use
     var remainingCount: Int {
+        currentIntervalUsageCount
+    }
+
+    var usedCount: Int {
         currentIntervalTotalCount - currentIntervalUsageCount
+    }
+
+    var remainingPercent: Double {
+        guard currentIntervalTotalCount > 0 else { return 0 }
+        return Double(currentIntervalUsageCount) / Double(currentIntervalTotalCount) * 100
+    }
+
+    var usedPercent: Double {
+        guard currentIntervalTotalCount > 0 else { return 0 }
+        return Double(usedCount) / Double(currentIntervalTotalCount) * 100
+    }
+
+    var periodStartDate: Date {
+        Date(timeIntervalSince1970: Double(startTime) / 1000.0)
+    }
+
+    var periodEndDate: Date {
+        Date(timeIntervalSince1970: Double(endTime) / 1000.0)
+    }
+
+    var timeWindowString: String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "MMM d, HH:mm"
+        return "\(formatter.string(from: periodStartDate)) - \(formatter.string(from: periodEndDate))"
+    }
+
+    var nextRefreshString: String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "MMM d, HH:mm"
+        return formatter.string(from: periodEndDate)
     }
 }
 

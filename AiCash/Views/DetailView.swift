@@ -386,30 +386,32 @@ struct UsageCard: View {
 
 struct MiniMaxDetailView: View {
     @ObservedObject var provider: MiniMaxProvider
-    
+
     var body: some View {
         ScrollView {
             VStack(spacing: 24) {
                 headerSection
-                
+
                 if let error = provider.errorMessage {
                     Text(error)
                         .foregroundColor(.red)
                         .font(.caption)
                         .padding(.horizontal)
                 }
-                
+
                 Divider()
                     .padding(.horizontal)
-                
-                remainingChatsSection
-                
+
+                timeWindowSection
+
+                modelListSection
+
                 Spacer()
             }
         }
         .background(Color(red: 0.05, green: 0.05, blue: 0.05))
     }
-    
+
     private var headerSection: some View {
         HStack(alignment: .bottom) {
             VStack(alignment: .leading, spacing: 4) {
@@ -419,9 +421,9 @@ struct MiniMaxDetailView: View {
                     .font(.system(size: 18))
                     .foregroundColor(.gray)
             }
-            
+
             Spacer()
-            
+
             if provider.isLoading {
                 ProgressView()
                     .scaleEffect(0.8)
@@ -439,57 +441,156 @@ struct MiniMaxDetailView: View {
         }
         .padding()
     }
-    
-    private var remainingChatsSection: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text("Remaining Chats")
+
+    private var timeWindowSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Current Period")
                 .font(.system(size: 16, weight: .semibold))
                 .foregroundColor(.gray)
                 .padding(.horizontal)
-            
-            // Progress bar showing used vs remaining
-            VStack(spacing: 8) {
-                GeometryReader { geometry in
-                    ZStack(alignment: .leading) {
-                        RoundedRectangle(cornerRadius: 8)
-                            .fill(Color.white.opacity(0.1))
-                            .frame(height: 20)
-                        
-                        RoundedRectangle(cornerRadius: 8)
-                            .fill(Color.blue)
-                            .frame(width: progressWidth(totalWidth: geometry.size.width), height: 20)
+
+            HStack(spacing: 16) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Time Window")
+                        .font(.system(size: 12))
+                        .foregroundColor(.secondary)
+                    if let start = provider.currentPeriodStart, let end = provider.currentPeriodEnd {
+                        Text(formatDateRange(start: start, end: end))
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundColor(.white)
+                    } else {
+                        Text("--")
+                            .font(.system(size: 14))
+                            .foregroundColor(.secondary)
                     }
                 }
-                .frame(height: 20)
-                
-                HStack {
-                    Text("Used: \(provider.totalChats - provider.remainingChats)")
-                        .font(.system(size: 14))
-                        .foregroundColor(.gray)
-                    Spacer()
-                    Text("Remaining: \(provider.remainingChats)")
-                        .font(.system(size: 14))
-                        .foregroundColor(.green)
+
+                Spacer()
+
+                VStack(alignment: .trailing, spacing: 4) {
+                    Text("Next Refresh")
+                        .font(.system(size: 12))
+                        .foregroundColor(.secondary)
+                    if let end = provider.currentPeriodEnd {
+                        Text(formatDate(end))
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundColor(.orange)
+                    } else {
+                        Text("--")
+                            .font(.system(size: 14))
+                            .foregroundColor(.secondary)
+                    }
                 }
             }
             .padding()
             .background(Color.white.opacity(0.05))
             .cornerRadius(12)
             .padding(.horizontal)
-            
-            // Stats
-            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 16) {
-                StatCard(title: "Total Chats", value: "\(provider.totalChats)", icon: "message")
-                StatCard(title: "Remaining", value: "\(provider.remainingChats)", icon: "checkmark.circle")
+        }
+    }
+
+    private var modelListSection: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("Models")
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundColor(.gray)
+                .padding(.horizontal)
+
+            ForEach(provider.modelRemains) { model in
+                ModelRemainCard(model: model)
             }
             .padding(.horizontal)
         }
     }
-    
-    private func progressWidth(totalWidth: CGFloat) -> CGFloat {
-        guard provider.totalChats > 0 else { return 0 }
-        let used = provider.totalChats - provider.remainingChats
-        let ratio = CGFloat(used) / CGFloat(provider.totalChats)
-        return totalWidth * ratio
+
+    private func formatDateRange(start: Date, end: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "MMM d, HH:mm"
+        return "\(formatter.string(from: start)) - \(formatter.string(from: end))"
+    }
+
+    private func formatDate(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "MMM d, HH:mm"
+        return formatter.string(from: date)
+    }
+}
+
+struct ModelRemainCard: View {
+    let model: ModelRemain
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Text(model.modelName)
+                    .font(.system(size: 16, weight: .bold))
+                    .foregroundColor(.white)
+
+                Spacer()
+
+                Text("\(Int(model.remainingPercent))% remaining")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(remainingColor)
+            }
+
+            GeometryReader { geometry in
+                ZStack(alignment: .leading) {
+                    RoundedRectangle(cornerRadius: 6)
+                        .fill(Color.white.opacity(0.1))
+                        .frame(height: 12)
+
+                    RoundedRectangle(cornerRadius: 6)
+                        .fill(remainingColor)
+                        .frame(width: geometry.size.width * CGFloat(model.remainingPercent / 100), height: 12)
+                }
+            }
+            .frame(height: 12)
+
+            HStack {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Used")
+                        .font(.system(size: 11))
+                        .foregroundColor(.secondary)
+                    Text("\(model.usedCount)")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundColor(.red)
+                }
+
+                Spacer()
+
+                VStack(alignment: .center, spacing: 2) {
+                    Text("Total")
+                        .font(.system(size: 11))
+                        .foregroundColor(.secondary)
+                    Text("\(model.currentIntervalTotalCount)")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundColor(.white)
+                }
+
+                Spacer()
+
+                VStack(alignment: .trailing, spacing: 2) {
+                    Text("Remaining")
+                        .font(.system(size: 11))
+                        .foregroundColor(.secondary)
+                    Text("\(model.remainingCount)")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundColor(.green)
+                }
+            }
+        }
+        .padding()
+        .background(Color.white.opacity(0.05))
+        .cornerRadius(12)
+    }
+
+    private var remainingColor: Color {
+        if model.remainingPercent > 50 {
+            return .green
+        } else if model.remainingPercent > 20 {
+            return .orange
+        } else {
+            return .red
+        }
     }
 }

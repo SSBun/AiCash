@@ -477,17 +477,23 @@ struct AddProviderView: View {
                         }
                     } else if selectedCategory == .minimax {
                         VStack(alignment: .leading, spacing: 12) {
-                            Text("Authentication")
+                            Text("How to get cURL:")
                                 .font(.system(size: 13, weight: .semibold))
                                 .foregroundColor(.secondary)
 
-                            Text("Paste the full cURL command from MiniMax platform (Developer Tools -> Network -> Copy as cURL).")
-                                .font(.system(size: 11))
-                                .foregroundColor(.secondary)
+                            VStack(alignment: .leading, spacing: 6) {
+                                Text("1. Open MiniMax dashboard at platform.minimaxi.com")
+                                Text("2. Open Developer Tools (F12 or Cmd+Opt+I)")
+                                Text("3. Go to Network tab")
+                                Text("4. Find request to /coding_plan/remains")
+                                Text("5. Right-click -> Copy as cURL")
+                            }
+                            .font(.system(size: 11))
+                            .foregroundColor(.secondary)
 
                             TextEditor(text: $curlCommand)
                                 .font(.system(size: 11, design: .monospaced))
-                                .frame(height: 150)
+                                .frame(height: 120)
                                 .padding(4)
                                 .background(Color(NSColor.controlBackgroundColor))
                                 .cornerRadius(4)
