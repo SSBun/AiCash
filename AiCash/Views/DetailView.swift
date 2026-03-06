@@ -304,6 +304,8 @@ struct ProviderDetailView: View {
             DetailView(provider: blt)
         } else if let zenmux = provider as? ZenMuxProvider {
             DetailView(provider: zenmux)
+        } else if let minimax = provider as? MiniMaxProvider {
+            MiniMaxDetailView(provider: minimax)
         } else {
             Text("Unknown provider type")
         }
@@ -377,5 +379,117 @@ struct UsageCard: View {
         .padding()
         .background(Color.white.opacity(0.05))
         .cornerRadius(12)
+    }
+}
+
+// MARK: - MiniMax Detail View
+
+struct MiniMaxDetailView: View {
+    @ObservedObject var provider: MiniMaxProvider
+    
+    var body: some View {
+        ScrollView {
+            VStack(spacing: 24) {
+                headerSection
+                
+                if let error = provider.errorMessage {
+                    Text(error)
+                        .foregroundColor(.red)
+                        .font(.caption)
+                        .padding(.horizontal)
+                }
+                
+                Divider()
+                    .padding(.horizontal)
+                
+                remainingChatsSection
+                
+                Spacer()
+            }
+        }
+        .background(Color(red: 0.05, green: 0.05, blue: 0.05))
+    }
+    
+    private var headerSection: some View {
+        HStack(alignment: .bottom) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text(provider.fullName)
+                    .font(.system(size: 28, weight: .bold))
+                Text(provider.symbol)
+                    .font(.system(size: 18))
+                    .foregroundColor(.gray)
+            }
+            
+            Spacer()
+            
+            if provider.isLoading {
+                ProgressView()
+                    .scaleEffect(0.8)
+            } else {
+                Button(action: {
+                    Task {
+                        await provider.fetchData()
+                    }
+                }) {
+                    Image(systemName: "arrow.clockwise")
+                        .font(.system(size: 16))
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .padding()
+    }
+    
+    private var remainingChatsSection: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("Remaining Chats")
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundColor(.gray)
+                .padding(.horizontal)
+            
+            // Progress bar showing used vs remaining
+            VStack(spacing: 8) {
+                GeometryReader { geometry in
+                    ZStack(alignment: .leading) {
+                        RoundedRectangle(cornerRadius: 8)
+                            .fill(Color.white.opacity(0.1))
+                            .frame(height: 20)
+                        
+                        RoundedRectangle(cornerRadius: 8)
+                            .fill(Color.blue)
+                            .frame(width: progressWidth(totalWidth: geometry.size.width), height: 20)
+                    }
+                }
+                .frame(height: 20)
+                
+                HStack {
+                    Text("Used: \(provider.totalChats - provider.remainingChats)")
+                        .font(.system(size: 14))
+                        .foregroundColor(.gray)
+                    Spacer()
+                    Text("Remaining: \(provider.remainingChats)")
+                        .font(.system(size: 14))
+                        .foregroundColor(.green)
+                }
+            }
+            .padding()
+            .background(Color.white.opacity(0.05))
+            .cornerRadius(12)
+            .padding(.horizontal)
+            
+            // Stats
+            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 16) {
+                StatCard(title: "Total Chats", value: "\(provider.totalChats)", icon: "message")
+                StatCard(title: "Remaining", value: "\(provider.remainingChats)", icon: "checkmark.circle")
+            }
+            .padding(.horizontal)
+        }
+    }
+    
+    private func progressWidth(totalWidth: CGFloat) -> CGFloat {
+        guard provider.totalChats > 0 else { return 0 }
+        let used = provider.totalChats - provider.remainingChats
+        let ratio = CGFloat(used) / CGFloat(provider.totalChats)
+        return totalWidth * ratio
     }
 }

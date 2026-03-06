@@ -4,9 +4,9 @@ enum SettingsTab: String, CaseIterable, Identifiable {
     case normal = "Normal"
     case providers = "Providers"
     case about = "About"
-    
+
     var id: String { rawValue }
-    
+
     var icon: String {
         switch self {
         case .normal: return "gearshape"
@@ -19,7 +19,7 @@ enum SettingsTab: String, CaseIterable, Identifiable {
 struct SettingsView: View {
     @ObservedObject var viewModel: ProviderViewModel
     @State private var selectedTab: SettingsTab = .normal
-    
+
     var body: some View {
         TabView(selection: $selectedTab) {
             NormalSettingsView()
@@ -27,7 +27,7 @@ struct SettingsView: View {
                     Label("Normal", systemImage: "gearshape")
                 }
                 .tag(SettingsTab.normal)
-            
+
             ProviderSettingsView(viewModel: viewModel)
                 .tabItem {
                     Label("Providers", systemImage: "cpu")
@@ -53,14 +53,14 @@ struct NormalSettingsView: View {
     @AppStorage("refreshInterval") private var refreshInterval = 30
     @AppStorage("accountHistoryRange") private var accountHistoryRange = 30
     @AppStorage("historyPageLimit") private var historyPageLimit = 100
-    
+
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 24) {
                 VStack(alignment: .leading, spacing: 12) {
                     Text("General")
                         .font(.system(size: 13, weight: .semibold))
-                    
+
                     HStack {
                         VStack(alignment: .leading, spacing: 4) {
                             Text("Launch at login")
@@ -74,13 +74,13 @@ struct NormalSettingsView: View {
                             .toggleStyle(.switch)
                     }
                 }
-                
+
                 Divider()
-                
+
                 VStack(alignment: .leading, spacing: 12) {
                     Text("Data")
                         .font(.system(size: 13, weight: .semibold))
-                    
+
                     HStack {
                         Text("History Range (days)")
                             .font(.system(size: 13))
@@ -94,7 +94,7 @@ struct NormalSettingsView: View {
                         }
                         .frame(width: 80)
                     }
-                    
+
                     HStack {
                         Text("Page Limit (records)")
                             .font(.system(size: 13))
@@ -107,7 +107,7 @@ struct NormalSettingsView: View {
                         }
                         .frame(width: 80)
                     }
-                    
+
                     HStack {
                         Text("Refresh Interval (minutes)")
                             .font(.system(size: 13))
@@ -121,7 +121,7 @@ struct NormalSettingsView: View {
                         .frame(width: 80)
                     }
                 }
-                
+
                 Spacer()
             }
             .padding(30)
@@ -133,17 +133,17 @@ struct ProviderSettingsView: View {
     @ObservedObject var viewModel: ProviderViewModel
     @State private var showingAddProvider = false
     @State private var editingProvider: (any AIProviderProtocol)?
-    
+
     var body: some View {
         VStack(spacing: 0) {
             List {
                 Section(header: Text("Active Providers")) {
                     ForEach(viewModel.providers, id: \.id) { provider in
                         HStack {
-                            Image(systemName: provider.name == "Cursor" ? "cpu" : "chart.line.uptrend.xyaxis")
+                            Image(systemName: providerIcon(for: provider))
                                 .foregroundColor(.blue)
                                 .frame(width: 20)
-                            
+
                             VStack(alignment: .leading) {
                                 Text(provider.name)
                                     .font(.system(size: 13, weight: .medium))
@@ -151,14 +151,14 @@ struct ProviderSettingsView: View {
                                     .font(.system(size: 11))
                                     .foregroundStyle(.secondary)
                             }
-                            
+
                             Spacer()
-                            
+
                             if provider.isLoading {
                                 ProgressView()
                                     .scaleEffect(0.5)
                             }
-                            
+
                             Button(action: { editingProvider = provider }) {
                                 Image(systemName: "pencil")
                                     .foregroundColor(.secondary)
@@ -172,9 +172,9 @@ struct ProviderSettingsView: View {
                 }
             }
             .listStyle(.inset)
-            
+
             Divider()
-            
+
             HStack {
                 Button(action: { showingAddProvider = true }) {
                     Image(systemName: "plus")
@@ -182,7 +182,7 @@ struct ProviderSettingsView: View {
                 }
                 .buttonStyle(.borderless)
                 .padding(12)
-                
+
                 Spacer()
             }
             .background(Color(NSColor.controlBackgroundColor))
@@ -197,12 +197,25 @@ struct ProviderSettingsView: View {
             EditProviderView(viewModel: viewModel, provider: item.provider)
         }
     }
+
+    private func providerIcon(for provider: any AIProviderProtocol) -> String {
+        if provider is CursorProvider {
+            return "cpu"
+        } else if provider is BLTProvider {
+            return "chart.line.uptrend.xyaxis"
+        } else if provider is ZenMuxProvider {
+            return "bolt.shield"
+        } else if provider is MiniMaxProvider {
+            return "message"
+        }
+        return "cpu"
+    }
 }
 
 struct ProviderIdentifiable: Identifiable {
     let id: UUID
     let provider: any AIProviderProtocol
-    
+
     init(provider: any AIProviderProtocol) {
         self.id = provider.id
         self.provider = provider
@@ -213,21 +226,21 @@ struct EditProviderView: View {
     @Environment(\.dismiss) var dismiss
     @ObservedObject var viewModel: ProviderViewModel
     let provider: any AIProviderProtocol
-    
+
     @State private var name: String
     @State private var fullName: String
     @State private var cookieString: String
     @State private var userId: String
     @State private var token: String
     @State private var curlCommand: String
-    
+
     init(viewModel: ProviderViewModel, provider: any AIProviderProtocol) {
         self.viewModel = viewModel
         self.provider = provider
         _name = State(initialValue: provider.name)
         _fullName = State(initialValue: provider.fullName)
         _cookieString = State(initialValue: provider.getCookieString())
-        
+
         if let blt = provider as? BLTProvider {
             _userId = State(initialValue: blt.userId)
             _token = State(initialValue: blt.token)
@@ -236,13 +249,17 @@ struct EditProviderView: View {
             _userId = State(initialValue: "")
             _token = State(initialValue: zenmux.token)
             _curlCommand = State(initialValue: zenmux.curlCommand)
+        } else if let minimax = provider as? MiniMaxProvider {
+            _userId = State(initialValue: "")
+            _token = State(initialValue: "")
+            _curlCommand = State(initialValue: minimax.curlCommand)
         } else {
             _userId = State(initialValue: "")
             _token = State(initialValue: "")
             _curlCommand = State(initialValue: "")
         }
     }
-    
+
     var body: some View {
         VStack(spacing: 0) {
             HStack {
@@ -251,13 +268,13 @@ struct EditProviderView: View {
                 Spacer()
             }
             .padding()
-            
+
             Form {
                 Section("Basic Information") {
                     TextField("Display Name", text: $name)
                     TextField("Full Name", text: $fullName)
                 }
-                
+
                 if provider is CursorProvider {
                     Section("Authentication") {
                         TextEditor(text: $cookieString)
@@ -277,10 +294,17 @@ struct EditProviderView: View {
                             .frame(height: 150)
                             .overlay(RoundedRectangle(cornerRadius: 4).stroke(Color.gray.opacity(0.2)))
                     }
+                } else if let _ = provider as? MiniMaxProvider {
+                    Section("Authentication") {
+                        TextEditor(text: $curlCommand)
+                            .font(.system(size: 11, design: .monospaced))
+                            .frame(height: 150)
+                            .overlay(RoundedRectangle(cornerRadius: 4).stroke(Color.gray.opacity(0.2)))
+                    }
                 }
             }
             .formStyle(.grouped)
-            
+
             HStack {
                 Button("Cancel") { dismiss() }
                 Spacer()
@@ -295,6 +319,8 @@ struct EditProviderView: View {
                     } else if let zenmux = provider as? ZenMuxProvider {
                         zenmux.token = token
                         zenmux.curlCommand = curlCommand
+                    } else if let minimax = provider as? MiniMaxProvider {
+                        minimax.curlCommand = curlCommand
                     }
                     StorageManager.shared.saveProviders(viewModel.providers)
                     dismiss()
@@ -312,14 +338,16 @@ enum ProviderCategory: String, CaseIterable, Identifiable {
     case cursor = "Cursor"
     case blt = "BLT"
     case zenmux = "ZenMux"
-    
+    case minimax = "MiniMax"
+
     var id: String { rawValue }
-    
+
     var icon: String {
         switch self {
         case .cursor: return "cpu"
         case .blt: return "chart.line.uptrend.xyaxis"
         case .zenmux: return "bolt.shield"
+        case .minimax: return "message"
         }
     }
 }
@@ -328,21 +356,21 @@ struct AddProviderView: View {
     @Environment(\.dismiss) var dismiss
     @ObservedObject var viewModel: ProviderViewModel
     @State private var selectedCategory: ProviderCategory = .cursor
-    
+
     // Common fields
     @State private var name = ""
     @State private var fullName = ""
-    
+
     // Cursor specific
     @State private var cookieString = ""
-    
+
     // BLT specific
     @State private var userId = ""
     @State private var token = ""
-    
-    // ZenMux specific
+
+    // ZenMux & MiniMax specific
     @State private var curlCommand = ""
-    
+
     var body: some View {
         VStack(spacing: 0) {
             // Header
@@ -357,7 +385,7 @@ struct AddProviderView: View {
                 .buttonStyle(.plain)
             }
             .padding()
-            
+
             // Category Picker
             Picker("Category", selection: $selectedCategory) {
                 ForEach(ProviderCategory.allCases) { category in
@@ -367,33 +395,33 @@ struct AddProviderView: View {
             .pickerStyle(.segmented)
             .padding(.horizontal)
             .padding(.bottom, 20)
-            
+
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
                     Group {
                         Text("Basic Information")
                             .font(.system(size: 13, weight: .semibold))
                             .foregroundColor(.secondary)
-                        
+
                         TextField("Display Name (e.g. My Cursor)", text: $name)
                             .textFieldStyle(.roundedBorder)
-                        
+
                         TextField("Full Name (e.g. Cursor AI Pro)", text: $fullName)
                             .textFieldStyle(.roundedBorder)
                     }
-                    
+
                     Divider()
-                    
+
                     if selectedCategory == .cursor {
                         VStack(alignment: .leading, spacing: 12) {
                             Text("Authentication")
                                 .font(.system(size: 13, weight: .semibold))
                                 .foregroundColor(.secondary)
-                            
+
                             Text("Please paste your Cursor.com cookies here. You can find them in your browser's Developer Tools (Application -> Cookies).")
                                 .font(.system(size: 11))
                                 .foregroundColor(.secondary)
-                            
+
                             TextEditor(text: $cookieString)
                                 .font(.system(size: 11, design: .monospaced))
                                 .frame(height: 100)
@@ -404,10 +432,9 @@ struct AddProviderView: View {
                                     RoundedRectangle(cornerRadius: 4)
                                         .stroke(Color.gray.opacity(0.2), lineWidth: 1)
                                 )
-                            
+
                             Button(action: {
                                 // Placeholder for one-step login logic
-                                // In a real app, this could open a webview
                             }) {
                                 Label("One-Step Login (Coming Soon)", systemImage: "safari")
                                     .frame(maxWidth: .infinity)
@@ -420,10 +447,10 @@ struct AddProviderView: View {
                             Text("Authentication")
                                 .font(.system(size: 13, weight: .semibold))
                                 .foregroundColor(.secondary)
-                            
+
                             TextField("User ID", text: $userId)
                                 .textFieldStyle(.roundedBorder)
-                            
+
                             TextField("Token", text: $token)
                                 .textFieldStyle(.roundedBorder)
                         }
@@ -432,11 +459,32 @@ struct AddProviderView: View {
                             Text("Authentication")
                                 .font(.system(size: 13, weight: .semibold))
                                 .foregroundColor(.secondary)
-                            
+
                             Text("Paste the full cURL command for the ZenMux user/info API here.")
                                 .font(.system(size: 11))
                                 .foregroundColor(.secondary)
-                            
+
+                            TextEditor(text: $curlCommand)
+                                .font(.system(size: 11, design: .monospaced))
+                                .frame(height: 150)
+                                .padding(4)
+                                .background(Color(NSColor.controlBackgroundColor))
+                                .cornerRadius(4)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 4)
+                                        .stroke(Color.gray.opacity(0.2), lineWidth: 1)
+                                )
+                        }
+                    } else if selectedCategory == .minimax {
+                        VStack(alignment: .leading, spacing: 12) {
+                            Text("Authentication")
+                                .font(.system(size: 13, weight: .semibold))
+                                .foregroundColor(.secondary)
+
+                            Text("Paste the full cURL command from MiniMax platform (Developer Tools -> Network -> Copy as cURL).")
+                                .font(.system(size: 11))
+                                .foregroundColor(.secondary)
+
                             TextEditor(text: $curlCommand)
                                 .font(.system(size: 11, design: .monospaced))
                                 .frame(height: 150)
@@ -452,18 +500,18 @@ struct AddProviderView: View {
                 }
                 .padding()
             }
-            
+
             Divider()
-            
+
             // Footer
             HStack {
                 Button("Cancel") {
                     dismiss()
                 }
                 .keyboardShortcut(.cancelAction)
-                
+
                 Spacer()
-                
+
                 Button("Add Provider") {
                     addProvider()
                 }
@@ -483,7 +531,7 @@ struct AddProviderView: View {
             updateDefaultNames(for: newValue)
         }
     }
-    
+
     private func updateDefaultNames(for category: ProviderCategory) {
         switch category {
         case .cursor:
@@ -495,9 +543,12 @@ struct AddProviderView: View {
         case .zenmux:
             name = "ZenMux"
             fullName = "ZenMux AI"
+        case .minimax:
+            name = "MiniMax"
+            fullName = "MiniMax AI"
         }
     }
-    
+
     private var isAddDisabled: Bool {
         if name.isEmpty || fullName.isEmpty { return true }
         switch selectedCategory {
@@ -505,11 +556,11 @@ struct AddProviderView: View {
             return cookieString.isEmpty
         case .blt:
             return userId.isEmpty || token.isEmpty
-        case .zenmux:
+        case .zenmux, .minimax:
             return curlCommand.isEmpty
         }
     }
-    
+
     private func addProvider() {
         let provider: any AIProviderProtocol
         switch selectedCategory {
@@ -532,13 +583,18 @@ struct AddProviderView: View {
             zenmux.name = name
             zenmux.fullName = fullName
             provider = zenmux
+        case .minimax:
+            let minimax = MiniMaxProvider()
+            minimax.curlCommand = curlCommand
+            minimax.name = name
+            minimax.fullName = fullName
+            provider = minimax
         }
-        
+
         viewModel.addProvider(provider)
         dismiss()
     }
 }
-
 
 
 // MARK: - About Tab View
