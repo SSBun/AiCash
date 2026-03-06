@@ -23,9 +23,40 @@ The app features a clean, modern interface with:
 
 ## Installation
 
-1. Download the latest release from [Releases](https://github.com/SSBun/AiCash/releases)
-2. Drag AiCash.app to your Applications folder
-3. Launch the app and configure your AI providers
+### Quick Install (One Command)
+Run this command in your terminal to download the latest version:
+
+```bash
+curl -sL https://github.com/SSBun/AiCash/raw/main/install_latest.sh | bash
+```
+
+The script will:
+1. Download the latest AiCash DMG to your Downloads folder
+2. Open the DMG file automatically
+
+Then:
+1. Drag AiCash.app to your Applications folder
+2. If macOS shows "AiCash is damaged" error, run:
+   ```bash
+   xattr -rd com.apple.quarantine /Applications/AiCash.app
+   ```
+
+Or clone the repository and run the script locally:
+
+```bash
+git clone https://github.com/SSBun/AiCash.git
+cd AiCash
+./install_latest.sh
+```
+
+### Manual Install
+1. Download the latest `AiCash-x.x.x.dmg` from the [Releases](https://github.com/SSBun/AiCash/releases) page
+2. Open the DMG file
+3. Drag AiCash to your Applications folder
+4. If macOS shows "AiCash is damaged" error, run:
+   ```bash
+   xattr -rd com.apple.quarantine /Applications/AiCash.app
+   ```
 
 ## Configuration
 
