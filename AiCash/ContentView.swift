@@ -3,11 +3,18 @@ import SwiftUI
 struct ContentView: View {
     @StateObject private var viewModel = ProviderViewModel.shared
     @State private var columnVisibility: NavigationSplitViewVisibility = .all
-    
+    @State private var hasRefreshed = false
+
     var body: some View {
         NavigationSplitView(columnVisibility: $columnVisibility) {
             ProviderListView(viewModel: viewModel)
                 .navigationSplitViewColumnWidth(min: 250, ideal: 320, max: 400)
+                .task {
+                    if !hasRefreshed && !viewModel.providers.isEmpty {
+                        hasRefreshed = true
+                        await viewModel.refreshAll()
+                    }
+                }
         } detail: {
             if let provider = viewModel.selectedProvider {
                 ProviderDetailView(provider: provider)
