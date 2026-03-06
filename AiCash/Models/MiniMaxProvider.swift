@@ -28,9 +28,15 @@ class MiniMaxProvider: NSObject, AIProviderProtocol, ObservableObject {
     @Published var currentPeriodStart: Date?
     @Published var currentPeriodEnd: Date?
 
+    // Subscription info
+    @Published var currentSubscriptionTitle: String = ""
+    @Published var currentSubscriptionEndDate: String = ""
+    @Published var currentComboCard: ComboCard?
+
     @Published var curlCommand: String = ""
 
     private let apiEndpoint = "https://www.minimaxi.com/v1/api/openplatform/coding_plan/remains"
+    private let subscriptionApiEndpoint = "https://www.minimaxi.com/v1/api/openplatform/charge/combo/cycle_audio_resource_package"
 
     // Override balanceString to show chat count instead of currency
     var balanceString: String {
@@ -128,6 +134,7 @@ class MiniMaxProvider: NSObject, AIProviderProtocol, ObservableObject {
 
         do {
             try await fetchRemainingChats(cookies: cookies, groupId: groupId)
+            try await fetchSubscriptionInfo(cookies: cookies, groupId: groupId)
             await MainActor.run {
                 self.isLoading = false
             }
@@ -187,9 +194,54 @@ class MiniMaxProvider: NSObject, AIProviderProtocol, ObservableObject {
             Log.info("[MiniMax] Remaining chats: \(self.remainingChats) / \(self.totalChats)")
         }
     }
+
+    private func fetchSubscriptionInfo(cookies: String, groupId: String) async throws {
+        var components = URLComponents(string: subscriptionApiEndpoint)!
+        components.queryItems = [
+            URLQueryItem(name: "biz_line", value: "2"),
+            URLQueryItem(name: "cycle_type", value: "3"),
+            URLQueryItem(name: "resource_package_type", value: "7"),
+            URLQueryItem(name: "GroupId", value: groupId)
+        ]
+
+        guard let url = components.url else { return }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        request.addValue("application/json, text/plain, */*", forHTTPHeaderField: "Accept")
+        request.addValue("en,zh;q=0.9,zh-CN;q=0.8,ja;q=0.7,ru;q=0.6", forHTTPHeaderField: "Accept-Language")
+        request.addValue("no-cache", forHTTPHeaderField: "Cache-Control")
+        request.addValue(cookies, forHTTPHeaderField: "Cookie")
+        request.addValue("https://platform.minimaxi.com/", forHTTPHeaderField: "Referer")
+        request.addValue("platform.minimaxi.com", forHTTPHeaderField: "Origin")
+        request.addValue("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36", forHTTPHeaderField: "User-Agent")
+
+        let (data, response) = try await URLSession.shared.data(for: request)
+
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw NSError(domain: "MiniMaxProvider", code: 0, userInfo: [NSLocalizedDescriptionKey: "Invalid response"])
+        }
+
+        if httpResponse.statusCode != 200 {
+            throw NSError(domain: "MiniMaxProvider", code: httpResponse.statusCode, userInfo: [NSLocalizedDescriptionKey: "API returned status \(httpResponse.statusCode)"])
+        }
+
+        let decoder = JSONDecoder()
+        let subscriptionResponse = try decoder.decode(SubscriptionResponse.self, from: data)
+
+        await MainActor.run {
+            if let current = subscriptionResponse.currentSubscribe {
+                self.currentSubscriptionTitle = current.currentSubscribeTitle ?? ""
+                self.currentSubscriptionEndDate = current.currentSubscribeEndTime ?? ""
+            }
+            self.currentComboCard = subscriptionResponse.currentComboCard
+            Log.info("[MiniMax] Subscription: \(self.currentSubscriptionTitle), Ends: \(self.currentSubscriptionEndDate)")
+        }
+    }
 }
 
-// MiniMax API Response Structures
+// MARK: - API Response Structures
+
 struct MiniMaxResponse: Codable {
     let modelRemains: [ModelRemain]?
     let baseResp: BaseResp?
@@ -267,4 +319,128 @@ struct BaseResp: Codable {
         case statusCode = "status_code"
         case statusMsg = "status_msg"
     }
+}
+
+// MARK: - Subscription API Response
+
+struct SubscriptionResponse: Codable {
+    let cycleResourcePackages: [CycleResourcePackage]?
+    let currentSubscribe: CurrentSubscribe?
+    let currentComboCard: ComboCard?
+    let baseResp: BaseResp?
+
+    enum CodingKeys: String, CodingKey {
+        case cycleResourcePackages = "cycle_resource_packages"
+        case currentSubscribe = "current_subscribe"
+        case currentComboCard = "current_combo_card"
+        case baseResp = "base_resp"
+    }
+}
+
+struct CurrentSubscribe: Codable {
+    let buttonText: String?
+    let currentSubscribeTitle: String?
+    let currentSubscribePrice: String?
+    let currentSubscribeCredit: Int?
+    let currentSubscribeEndTime: String?
+    let currentSubscribeComboType: Int?
+    let currSubscribeComboId: String?
+    let currentSubscribeCycleType: Int?
+    let currentCreditReloadTime: String?
+    let nextSubscribeTitle: String?
+    let renewalDate: String?
+    let nextSubscribeComboType: Int?
+    let renewalState: Int?
+    let nxtSubscribeComboId: String?
+    let nextSubscribeCycleType: Int?
+
+    enum CodingKeys: String, CodingKey {
+        case buttonText = "button_text"
+        case currentSubscribeTitle = "current_subscribe_title"
+        case currentSubscribePrice = "current_subscribe_price"
+        case currentSubscribeCredit = "current_subscribe_credit"
+        case currentSubscribeEndTime = "current_subscribe_end_time"
+        case currentSubscribeComboType = "current_subscribe_combo_type"
+        case currSubscribeComboId = "curr_subscribe_combo_id"
+        case currentSubscribeCycleType = "current_subscribe_cycle_type"
+        case currentCreditReloadTime = "current_credit_reload_time"
+        case nextSubscribeTitle = "next_subscribe_title"
+        case renewalDate = "renewal_date"
+        case nextSubscribeComboType = "next_subscribe_combo_type"
+        case renewalState = "renewal_state"
+        case nxtSubscribeComboId = "nxt_subscribe_combo_id"
+        case nextSubscribeCycleType = "next_subscribe_cycle_type"
+    }
+}
+
+struct ComboCard: Codable, Identifiable {
+    let title: String?
+    let priceData: PriceData?
+    let instruction: String?
+    let buttonText: String?
+    let creditBenefit: [String]?
+    let featureTitle: String?
+    let featureBenefit: [String]?
+    let currency: String?
+    let comboId: String?
+    let comboType: Int?
+    let cycleType: Int?
+    let priceDesc: String?
+
+    enum CodingKeys: String, CodingKey {
+        case title
+        case priceData = "price_data"
+        case instruction
+        case buttonText = "button_text"
+        case creditBenefit = "credit_benefit"
+        case featureTitle = "feature_title"
+        case featureBenefit = "feature_benefit"
+        case currency
+        case comboId = "combo_id"
+        case comboType = "combo_type"
+        case cycleType = "cycle_type"
+        case priceDesc = "price_desc"
+    }
+
+    var id: String { comboId ?? UUID().uuidString }
+
+    var priceString: String {
+        if let price = priceData?.priceTag {
+            return "¥\(price)"
+        }
+        return instruction ?? "-"
+    }
+
+    var cycleString: String {
+        priceDesc ?? "-"
+    }
+}
+
+struct PriceData: Codable {
+    let priceTag: String?
+    let originalPriceTag: String?
+    let unit: String?
+    let renewPriceTag: String?
+
+    enum CodingKeys: String, CodingKey {
+        case priceTag = "price_tag"
+        case originalPriceTag = "original_price_tag"
+        case unit
+        case renewPriceTag = "renew_price_tag"
+    }
+}
+
+struct CycleResourcePackage: Codable {
+    let title: String?
+    let priceData: PriceData?
+    let instruction: String?
+    let buttonText: String?
+    let creditBenefit: [String]?
+    let featureTitle: String?
+    let featureBenefit: [String]?
+    let currency: String?
+    let comboId: String?
+    let comboType: Int?
+    let cycleType: Int?
+    let priceDesc: String?
 }

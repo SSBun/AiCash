@@ -10,36 +10,36 @@ struct DailyCost: Identifiable {
 struct DetailView<Provider: AIProviderProtocol>: View {
     @ObservedObject var provider: Provider
     @State private var refreshRotation: Double = 0
-    
+
     var body: some View {
         ScrollView {
             VStack(spacing: 24) {
                 headerSection
-                
+
                 if let error = provider.errorMessage {
                     Text(error)
                         .foregroundColor(.red)
                         .font(.caption)
                         .padding(.horizontal)
                 }
-                
+
                 Divider()
                     .padding(.horizontal)
-                
+
                 usageOverviewSection
-                
+
                 statisticsGridSection
-                
+
                 if !provider.usageEvents.isEmpty {
                     usageEventsSection
                 }
-                
+
                 Spacer()
             }
         }
         .background(Color(red: 0.05, green: 0.05, blue: 0.05))
     }
-    
+
     private var headerSection: some View {
         HStack(alignment: .bottom) {
             VStack(alignment: .leading, spacing: 4) {
@@ -49,19 +49,19 @@ struct DetailView<Provider: AIProviderProtocol>: View {
                     .font(.system(size: 18))
                     .foregroundColor(.gray)
             }
-            
+
             Spacer()
-            
+
             if provider.isLoading {
                 ProgressView()
                     .scaleEffect(0.8)
                     .padding(.trailing, 8)
             }
-            
+
             VStack(alignment: .trailing, spacing: 4) {
                 Text(provider.balanceString)
                     .font(.system(size: 32, weight: .bold))
-                
+
                 HStack(spacing: 4) {
                     Image(systemName: "arrow.up.right")
                     Text(provider.todayUsageString)
@@ -69,7 +69,7 @@ struct DetailView<Provider: AIProviderProtocol>: View {
                 .font(.system(size: 16, weight: .semibold))
                 .foregroundColor(.red)
             }
-            
+
             Button(action: {
                 withAnimation(.easeInOut(duration: 0.6)) {
                     refreshRotation += 360
@@ -94,13 +94,13 @@ struct DetailView<Provider: AIProviderProtocol>: View {
         .padding(.horizontal)
         .padding(.top, 20)
     }
-    
+
     private var usageOverviewSection: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Usage Overview")
                 .font(.system(size: 20, weight: .bold))
                 .padding(.horizontal)
-            
+
             if !(provider is BLTProvider) {
                 HStack(spacing: 16) {
                     UsageCard(
@@ -109,7 +109,7 @@ struct DetailView<Provider: AIProviderProtocol>: View {
                         limit: "$\(String(format: "%.0f", provider.includedLimit))",
                         progress: provider.includedLimit > 0 ? provider.includedUsage / provider.includedLimit : 0
                     )
-                    
+
                     UsageCard(
                         title: "On-Demand Usage",
                         value: "$\(String(format: "%.2f", provider.onDemandUsage))",
@@ -128,7 +128,7 @@ struct DetailView<Provider: AIProviderProtocol>: View {
                         progress: 0,
                         isUnlimited: true
                     )
-                    
+
                     UsageCard(
                         title: "Remaining Quota",
                         value: "$\(String(format: "%.2f", provider.balance))",
@@ -139,17 +139,17 @@ struct DetailView<Provider: AIProviderProtocol>: View {
                 }
                 .padding(.horizontal)
             }
-            
+
             if !provider.usageHistory.isEmpty {
                 usageChart
             }
-            
+
             if !dailyCostData.isEmpty {
                 dailyCostChart
             }
         }
     }
-    
+
     /// Aggregates usage history by calendar day for the bar chart.
     private var dailyCostData: [DailyCost] {
         let calendar = Calendar.current
@@ -160,14 +160,14 @@ struct DetailView<Provider: AIProviderProtocol>: View {
         }
         return byDay.sorted(by: { $0.key < $1.key }).map { DailyCost(date: $0.key, amount: $0.value) }
     }
-    
+
     private var dailyCostChart: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Daily Cost")
                 .font(.system(size: 16, weight: .semibold))
                 .foregroundColor(.secondary)
                 .padding(.horizontal)
-            
+
             Chart(dailyCostData) { item in
                 BarMark(
                     x: .value("Date", item.date),
@@ -198,7 +198,7 @@ struct DetailView<Provider: AIProviderProtocol>: View {
             .padding(.horizontal)
         }
     }
-    
+
     private var usageChart: some View {
         Chart {
             ForEach(provider.usageHistory) { usage in
@@ -207,7 +207,7 @@ struct DetailView<Provider: AIProviderProtocol>: View {
                     y: .value("Usage", usage.amount)
                 )
                 .foregroundStyle(Color.red)
-                
+
                 AreaMark(
                     x: .value("Time", usage.date),
                     y: .value("Usage", usage.amount)
@@ -227,13 +227,13 @@ struct DetailView<Provider: AIProviderProtocol>: View {
         .frame(height: 200)
         .padding(.horizontal)
     }
-    
+
     private var usageEventsSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Recent Events")
                 .font(.system(size: 20, weight: .bold))
                 .padding(.horizontal)
-            
+
             VStack(spacing: 0) {
                 // Header
                             HStack {
@@ -255,7 +255,7 @@ struct DetailView<Provider: AIProviderProtocol>: View {
                             .padding(.vertical, 8)
                             .padding(.horizontal)
                             .background(Color.white.opacity(0.05))
-                            
+
                             ForEach(provider.usageEvents) { event in
                                 Divider()
                                 HStack {
@@ -282,7 +282,7 @@ struct DetailView<Provider: AIProviderProtocol>: View {
             .padding(.horizontal)
         }
     }
-    
+
     private var statisticsGridSection: some View {
         LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 16) {
             StatCard(title: "Status", value: provider.isLoading ? "Loading..." : "Active", icon: "bolt.fill")
@@ -296,7 +296,7 @@ struct DetailView<Provider: AIProviderProtocol>: View {
 
 struct ProviderDetailView: View {
     let provider: any AIProviderProtocol
-    
+
     var body: some View {
         if let cursor = provider as? CursorProvider {
             DetailView(provider: cursor)
@@ -316,7 +316,7 @@ struct StatCard: View {
     let title: String
     let value: String
     let icon: String
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
@@ -326,7 +326,7 @@ struct StatCard: View {
                     .font(.system(size: 14))
                     .foregroundColor(.gray)
             }
-            
+
             Text(value)
                 .font(.system(size: 24, weight: .bold))
                 .foregroundColor(.white)
@@ -344,13 +344,13 @@ struct UsageCard: View {
     let limit: String
     let progress: Double
     var isUnlimited: Bool = false
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text(title)
                 .font(.system(size: 12))
                 .foregroundColor(.secondary)
-            
+
             HStack(alignment: .bottom, spacing: 4) {
                 Text(value)
                     .font(.system(size: 24, weight: .bold))
@@ -359,7 +359,7 @@ struct UsageCard: View {
                     .foregroundColor(.secondary)
                     .padding(.bottom, 2)
             }
-            
+
             if !isUnlimited {
                 GeometryReader { geo in
                     ZStack(alignment: .leading) {
@@ -402,6 +402,8 @@ struct MiniMaxDetailView: View {
                 Divider()
                     .padding(.horizontal)
 
+                subscriptionSection
+
                 timeWindowSection
 
                 modelListSection
@@ -440,6 +442,63 @@ struct MiniMaxDetailView: View {
             }
         }
         .padding()
+    }
+
+    private var subscriptionSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Subscription")
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundColor(.gray)
+                .padding(.horizontal)
+
+            HStack(spacing: 16) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Current Plan")
+                        .font(.system(size: 12))
+                        .foregroundColor(.secondary)
+                    Text(provider.currentSubscriptionTitle.isEmpty ? "--" : provider.currentSubscriptionTitle)
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundColor(.white)
+                }
+
+                Spacer()
+
+                if let combo = provider.currentComboCard {
+                    VStack(alignment: .trailing, spacing: 4) {
+                        Text("Price")
+                            .font(.system(size: 12))
+                            .foregroundColor(.secondary)
+                        Text(combo.priceString)
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundColor(.green)
+                    }
+
+                    Spacer()
+
+                    VStack(alignment: .trailing, spacing: 4) {
+                        Text("Cycle")
+                            .font(.system(size: 12))
+                            .foregroundColor(.secondary)
+                        Text(combo.cycleString)
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundColor(.white)
+                    }
+                }
+
+                VStack(alignment: .trailing, spacing: 4) {
+                    Text("Expires")
+                        .font(.system(size: 12))
+                        .foregroundColor(.secondary)
+                    Text(provider.currentSubscriptionEndDate.isEmpty ? "--" : provider.currentSubscriptionEndDate)
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundColor(.orange)
+                }
+            }
+            .padding()
+            .background(Color.white.opacity(0.05))
+            .cornerRadius(12)
+            .padding(.horizontal)
+        }
     }
 
     private var timeWindowSection: some View {
