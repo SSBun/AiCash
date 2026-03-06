@@ -40,17 +40,79 @@ cp -R "$APP_PATH" "$TMP_DIR/"
 # Create Applications symlink for easy installation
 ln -s /Applications "$TMP_DIR/Applications"
 
+# Create installation guide
+cat > "$TMP_DIR/安装指南.md" << 'EOF'
+# AiCash 安装指南
+
+## 安装步骤
+
+1. 将 **AiCash.app** 拖拽到 **Applications** 文件夹
+
+2. 首次运行时，由于应用未签名，需要执行以下命令解除隔离：
+
+```bash
+sudo xattr -r -d com.apple.quarantine /Applications/AiCash.app
+```
+
+或者右键点击 AiCash.app，选择「打开」，然后在弹出的对话框中点击「打开」。
+
+3. 在「系统设置」→「隐私与安全性」中，如果提示「AiCash」已损坏，点击「仍要打开」。
+
+## 常见问题
+
+**Q: 提示应用已损坏？**
+A: 执行上述命令或在系统设置中允许运行。
+
+**Q: 无法打开应用？**
+A: 确保已将应用拖到 Applications 文件夹，而不是直接在 DMG 中运行。
+
+**Q: 如何卸载？**
+A: 直接删除 Applications 文件夹中的 AiCash.app 即可。
+EOF
+
+# Create English installation guide
+cat > "$TMP_DIR/INSTALL_GUIDE.md" << 'EOF'
+# AiCash Installation Guide
+
+## Installation Steps
+
+1. Drag **AiCash.app** to the **Applications** folder
+
+2. Since the app is unsigned, run the following command to remove the quarantine attribute:
+
+```bash
+sudo xattr -r -d com.apple.quarantine /Applications/AiCash.app
+```
+
+Alternatively, right-click on AiCash.app and select "Open", then click "Open" in the dialog.
+
+3. In "System Settings" → "Privacy & Security", if prompted that "AiCash" is damaged, click "Open Anyway".
+
+## FAQ
+
+**Q: App is damaged?**
+A: Run the command above or allow it in System Settings.
+
+**Q: Can't open the app?**
+A: Make sure you've copied it to Applications folder, not running from DMG.
+
+**Q: How to uninstall?**
+A: Simply delete AiCash.app from Applications folder.
+EOF
+
 # Check if create-dmg is installed
 if command -v create-dmg &> /dev/null; then
   echo -e "${GREEN}Using create-dmg...${NC}"
   create-dmg \
     --volname "AiCash" \
     --window-pos 200 120 \
-    --window-size 600 400 \
-    --icon-size 100 \
-    --icon "AiCash.app" 175 190 \
+    --window-size 700 450 \
+    --icon-size 80 \
+    --icon "AiCash.app" 150 250 \
+    --icon "安装指南.md" 350 250 \
+    --icon "INSTALL_GUIDE.md" 350 350 \
     --hide-extension "AiCash.app" \
-    --app-drop-link 425 190 \
+    --app-drop-link 550 250 \
     --no-internet-enable \
     "$DMG_NAME" \
     "$TMP_DIR/" 2>/dev/null || true
