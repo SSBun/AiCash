@@ -22,6 +22,7 @@ class MiniMaxProvider: NSObject, AIProviderProtocol, ObservableObject {
     // MiniMax specific - remaining chat count
     @Published var remainingChats: Int = 0
     @Published var totalChats: Int = 0
+    @Published var modelRemains: [ModelRemain] = []
 
     @Published var curlCommand: String = ""
 
@@ -42,13 +43,11 @@ class MiniMaxProvider: NSObject, AIProviderProtocol, ObservableObject {
     private func extractCookiesFromCurl() -> String? {
         Log.info("[MiniMax] Extracting cookies from cURL command...")
 
-        // Extract -b or --cookie value
         var cookieString = ""
 
         // Look for -b 'cookies' or -b "cookies"
         if let range = curlCommand.range(of: "-b\\s+['\"]([^'\"]+)['\"]", options: .regularExpression) {
             let match = String(curlCommand[range])
-            // Extract the cookie value
             if let startQuote = match.firstIndex(of: "'"), let endQuote = match.lastIndex(of: "'") {
                 let start = match.index(after: startQuote)
                 cookieString = String(match[start..<endQuote])
@@ -77,7 +76,6 @@ class MiniMaxProvider: NSObject, AIProviderProtocol, ObservableObject {
     }
 
     private func extractGroupId() -> String? {
-        // Extract GroupId from URL
         if let range = curlCommand.range(of: "GroupId=([^&'\"\\s]+)", options: .regularExpression) {
             let match = String(curlCommand[range])
             return match.replacingOccurrences(of: "GroupId=", with: "")
@@ -159,11 +157,15 @@ class MiniMaxProvider: NSObject, AIProviderProtocol, ObservableObject {
         let miniMaxResponse = try decoder.decode(MiniMaxResponse.self, from: data)
 
         await MainActor.run {
-            if let data = miniMaxResponse.data {
-                self.remainingChats = data.remainCount
-                self.totalChats = data.totalCount
-                // For display purposes, we treat remaining chats as "balance"
-                self.balance = Double(data.remainCount)
+            if let modelRemains = miniMaxResponse.modelRemains, !modelRemains.isEmpty {
+                self.modelRemains = modelRemains
+                // Use the first model's data for display
+                if let first = modelRemains.first {
+                    self.totalChats = first.currentIntervalTotalCount
+                    self.remainingChats = first.currentIntervalTotalCount - first.currentIntervalUsageCount
+                    // For display purposes, we treat remaining chats as "balance"
+                    self.balance = Double(self.remainingChats)
+                }
             }
             Log.info("[MiniMax] Remaining chats: \(self.remainingChats) / \(self.totalChats)")
         }
@@ -172,13 +174,43 @@ class MiniMaxProvider: NSObject, AIProviderProtocol, ObservableObject {
 
 // MiniMax API Response Structures
 struct MiniMaxResponse: Codable {
-    let code: Int
-    let msg: String
-    let data: MiniMaxData?
+    let modelRemains: [ModelRemain]?
+    let baseResp: BaseResp?
+
+    enum CodingKeys: String, CodingKey {
+        case modelRemains = "model_remains"
+        case baseResp = "base_resp"
+    }
 }
 
-struct MiniMaxData: Codable {
-    let totalCount: Int
-    let remainCount: Int
-    let expireTime: String?
+struct ModelRemain: Codable {
+    let startTime: Int64
+    let endTime: Int64
+    let remainsTime: Int64
+    let currentIntervalTotalCount: Int
+    let currentIntervalUsageCount: Int
+    let modelName: String
+
+    enum CodingKeys: String, CodingKey {
+        case startTime = "start_time"
+        case endTime = "end_time"
+        case remainsTime = "remains_time"
+        case currentIntervalTotalCount = "current_interval_total_count"
+        case currentIntervalUsageCount = "current_interval_usage_count"
+        case modelName = "model_name"
+    }
+
+    var remainingCount: Int {
+        currentIntervalTotalCount - currentIntervalUsageCount
+    }
+}
+
+struct BaseResp: Codable {
+    let statusCode: Int
+    let statusMsg: String
+
+    enum CodingKeys: String, CodingKey {
+        case statusCode = "status_code"
+        case statusMsg = "status_msg"
+    }
 }
