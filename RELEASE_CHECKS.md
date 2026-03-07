@@ -36,7 +36,20 @@ Or open in Xcode and build with `Cmd + B`, then archive with `Cmd + Shift + E`.
 - Verify the app version shows correctly in Settings > About tab
 - Test basic functionality
 
-## 4. Create Version Tag
+## 4. Commit All Changes
+
+Commit the version changes before creating the tag:
+
+```bash
+# Stage and commit version changes
+git add -A
+git commit -m "chore: bump version to X.X.X"
+
+# Push the commit
+git push origin main
+```
+
+## 5. Create Version Tag
 
 Create and push a git tag with the version number:
 
@@ -48,13 +61,13 @@ git tag -a vX.X.X -m "Release vX.X.X"
 git push origin vX.X.X
 ```
 
-## 5. Verify GitHub Action
+## 6. Verify GitHub Action
 
 - Go to [GitHub Actions](https://github.com/SSBun/AiCash/actions)
 - Check the release workflow is running
 - Verify the DMG is uploaded to the release
 
-## 6. Verify Release
+## 7. Verify Release
 
 - Check the release is created at https://github.com/SSBun/AiCash/releases
 - Verify the DMG file is attached
@@ -72,5 +85,6 @@ git push origin vX.X.X
 | Update version | `sed -i '' 's/MARKETING_VERSION = .*/MARKETING_VERSION = X.X.X;/g' AiCash.xcodeproj/project.pbxproj` |
 | Update build | `sed -i '' 's/CURRENT_PROJECT_VERSION = .*/CURRENT_PROJECT_VERSION = N;/g' AiCash.xcodeproj/project.pbxproj` |
 | Build | `xcodebuild -project AiCash.xcodeproj -scheme AiCash -configuration Release build` |
+| Commit | `git add -A && git commit -m "chore: bump version to X.X.X" && git push origin main` |
 | Create tag | `git tag -a vX.X.X -m "Release vX.X.X"` |
 | Push tag | `git push origin vX.X.X` |
