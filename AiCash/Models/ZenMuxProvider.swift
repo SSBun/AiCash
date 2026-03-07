@@ -136,21 +136,21 @@ class ZenMuxProvider: NSObject, AIProviderProtocol, ObservableObject {
         let creditResponse = try decoder.decode(ZenMuxCreditResponse.self, from: data)
 
         await MainActor.run {
-            if let data = creditResponse.data {
-                self.accountId = data.accountId
-                self.accountType = data.accountType
-                self.oweFeeSum = data.oweFeeSum
-                self.balance = data.balance
-                self.actualFee = data.actualFee
+            if let responseData = creditResponse.data {
+                self.accountId = responseData.accountId
+                self.accountType = responseData.accountType
+                self.oweFeeSum = responseData.oweFeeSum
+                self.balance = responseData.balance
+                self.actualFee = responseData.actualFee
 
                 // Parse balancesMap
-                if let balancesMap = data.balancesMap {
+                if let balancesMap = responseData.balancesMap {
                     self.chargeBalance = balancesMap.charge ?? 0
                     self.discountBalance = balancesMap.discount ?? 0
                 }
 
                 // For display: balance shows the actual available credit
-                self.balance = data.balance
+                self.balance = responseData.balance
             }
             Log.info("[ZenMux] Credits fetch successful. Balance: \(self.balance)")
         }
@@ -166,8 +166,13 @@ class ZenMuxProvider: NSObject, AIProviderProtocol, ObservableObject {
 
 // ZenMux API Response Structures
 struct ZenMuxCreditResponse: Codable {
-    let success: Bool
+    let success: Bool?
     let data: ZenMuxCreditData?
+
+    enum CodingKeys: String, CodingKey {
+        case success = "successs"  // Note: API has typo "successs" with 3 s's
+        case data
+    }
 }
 
 struct ZenMuxCreditData: Codable {
