@@ -303,7 +303,7 @@ struct ProviderDetailView: View {
         } else if let blt = provider as? BLTProvider {
             DetailView(provider: blt)
         } else if let zenmux = provider as? ZenMuxProvider {
-            DetailView(provider: zenmux)
+            ZenMuxDetailView(provider: zenmux)
         } else if let minimax = provider as? MiniMaxProvider {
             MiniMaxDetailView(provider: minimax)
         } else {
@@ -379,6 +379,179 @@ struct UsageCard: View {
         .padding()
         .background(Color.white.opacity(0.05))
         .cornerRadius(12)
+    }
+}
+
+// MARK: - ZenMux Detail View
+
+struct ZenMuxDetailView: View {
+    @ObservedObject var provider: ZenMuxProvider
+
+    var body: some View {
+        ScrollView {
+            VStack(spacing: 24) {
+                headerSection
+
+                if let error = provider.errorMessage {
+                    Text(error)
+                        .foregroundColor(.red)
+                        .font(.caption)
+                        .padding(.horizontal)
+                }
+
+                Divider()
+                    .padding(.horizontal)
+
+                usageOverviewSection
+
+                walletSection
+
+                Spacer()
+            }
+        }
+        .background(Color(red: 0.05, green: 0.05, blue: 0.05))
+    }
+
+    private var headerSection: some View {
+        HStack(alignment: .bottom) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text(provider.fullName)
+                    .font(.system(size: 28, weight: .bold))
+                Text(provider.symbol)
+                    .font(.system(size: 18))
+                    .foregroundColor(.gray)
+            }
+
+            Spacer()
+
+            if provider.isLoading {
+                ProgressView()
+                    .scaleEffect(0.8)
+            } else {
+                Button(action: {
+                    Task {
+                        await provider.fetchData()
+                    }
+                }) {
+                    Image(systemName: "arrow.clockwise")
+                        .font(.system(size: 16))
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .padding()
+    }
+
+    private var usageOverviewSection: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("Today's Usage")
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundColor(.gray)
+                .padding(.horizontal)
+
+            HStack(spacing: 16) {
+                UsageCard(
+                    title: "Total Cost",
+                    value: "$\(String(format: "%.6f", provider.todayUsage))",
+                    limit: "Today",
+                    progress: 0,
+                    isUnlimited: true
+                )
+
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack {
+                        Text("Input")
+                            .font(.system(size: 12))
+                            .foregroundColor(.secondary)
+                        Spacer()
+                        Text("$\(String(format: "%.6f", provider.todayInputCost))")
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundColor(.white)
+                    }
+
+                    HStack {
+                        Text("Output")
+                            .font(.system(size: 12))
+                            .foregroundColor(.secondary)
+                        Spacer()
+                        Text("$\(String(format: "%.6f", provider.todayOutputCost))")
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundColor(.white)
+                    }
+
+                    HStack {
+                        Text("Requests")
+                            .font(.system(size: 12))
+                            .foregroundColor(.secondary)
+                        Spacer()
+                        Text("\(provider.todayRequestCount)")
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundColor(.white)
+                    }
+                }
+                .padding()
+                .background(Color.white.opacity(0.05))
+                .cornerRadius(12)
+            }
+            .padding(.horizontal)
+        }
+    }
+
+    private var walletSection: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("Wallet Balance")
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundColor(.gray)
+                .padding(.horizontal)
+
+            HStack(spacing: 16) {
+                UsageCard(
+                    title: "Total Balance",
+                    value: "$\(String(format: "%.2f", provider.balance))",
+                    limit: "Available",
+                    progress: 0,
+                    isUnlimited: true
+                )
+
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack {
+                        Text("Charge")
+                            .font(.system(size: 12))
+                            .foregroundColor(.secondary)
+                        Spacer()
+                        Text("$\(String(format: "%.2f", provider.chargeBalance))")
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundColor(.green)
+                    }
+
+                    HStack {
+                        Text("Discount")
+                            .font(.system(size: 12))
+                            .foregroundColor(.secondary)
+                        Spacer()
+                        Text("$\(String(format: "%.2f", provider.discountBalance))")
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundColor(.orange)
+                    }
+
+                    Divider()
+
+                    HStack {
+                        Text("Owe")
+                            .font(.system(size: 12))
+                            .foregroundColor(.secondary)
+                        Spacer()
+                        Text("$\(String(format: "%.2f", provider.oweFeeSum))")
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundColor(provider.oweFeeSum > 0 ? .red : .white)
+                    }
+                }
+                .padding()
+                .background(Color.white.opacity(0.05))
+                .cornerRadius(12)
+            }
+            .padding(.horizontal)
+        }
     }
 }
 
