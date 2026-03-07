@@ -31,12 +31,18 @@ class ZenMuxProvider: NSObject, AIProviderProtocol, ObservableObject {
     @Published var discountBalance: Double = 0.0
     @Published var actualFee: Double = 0.0
 
+    // Daily cost info
+    @Published var todayInputCost: Double = 0.0
+    @Published var todayOutputCost: Double = 0.0
+    @Published var todayRequestCount: Int = 0
+
     // Extracted session info
     private var extractedCtoken: String?
     private var extractedSessionId: String?
     private var extractedSessionIdSig: String?
 
     private let creditApiEndpoint = "https://zenmux.ai/api/payment/transtion/get_credits"
+    private let dailyCostEndpoint = "https://zenmux.ai/api/dashboard/cost/query/summary"
 
     func login() async {
         Log.info("[ZenMux] Login method called.")
@@ -93,6 +99,7 @@ class ZenMuxProvider: NSObject, AIProviderProtocol, ObservableObject {
 
         do {
             try await fetchCredits(ctoken: ctoken)
+            try await fetchDailyCost(ctoken: ctoken)
             await MainActor.run {
                 self.isLoading = false
             }
@@ -155,6 +162,72 @@ class ZenMuxProvider: NSObject, AIProviderProtocol, ObservableObject {
         }
     }
 
+    private func fetchDailyCost(ctoken: String) async throws {
+        var components = URLComponents(string: dailyCostEndpoint)!
+        components.queryItems = [URLQueryItem(name: "ctoken", value: ctoken)]
+
+        guard let url = components.url else { return }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.addValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.addValue("application/json, text/plain, */*", forHTTPHeaderField: "Accept")
+        request.addValue("en,zh;q=0.9,zh-CN;q=0.8,ja;q=0.7,ru;q=0.6", forHTTPHeaderField: "Accept-Language")
+        request.addValue("no-cache", forHTTPHeaderField: "Cache-Control")
+        request.addValue("https://zenmux.ai", forHTTPHeaderField: "Origin")
+
+        let cookieHeader = constructCookieHeader(ctoken: ctoken)
+        request.addValue(cookieHeader, forHTTPHeaderField: "Cookie")
+        request.addValue("https://zenmux.ai/platform/cost", forHTTPHeaderField: "Referer")
+        request.addValue("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36", forHTTPHeaderField: "User-Agent")
+
+        // Get today's date in YYYYMMDD format
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyyMMdd"
+        let todayStr = formatter.string(from: Date())
+
+        let body: [String: Any] = [
+            "queryDimension": "BIZ_DT",
+            "queryTime": todayStr,
+            "apiKeys": [],
+            "modelSlugs": [],
+            "endpointSlugs": []
+        ]
+
+        request.httpBody = try? JSONSerialization.data(withJSONObject: body)
+
+        let (data, response) = try await URLSession.shared.data(for: request)
+
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw NSError(domain: "ZenMuxProvider", code: 0, userInfo: [NSLocalizedDescriptionKey: "Invalid response"])
+        }
+
+        if httpResponse.statusCode != 200 {
+            throw NSError(domain: "ZenMuxProvider", code: httpResponse.statusCode, userInfo: [NSLocalizedDescriptionKey: "API returned status \(httpResponse.statusCode)"])
+        }
+
+        let decoder = JSONDecoder()
+        let costResponse = try decoder.decode(ZenMuxCostResponse.self, from: data)
+
+        await MainActor.run {
+            if let costData = costResponse.data {
+                // Parse costs (they come as strings)
+                let totalCost = Double(costData.totalCost) ?? 0.0
+                let inputCost = Double(costData.inputCost) ?? 0.0
+                let outputCost = Double(costData.outputCost) ?? 0.0
+
+                self.todayUsage = totalCost
+                self.todayInputCost = inputCost
+                self.todayOutputCost = outputCost
+                self.todayRequestCount = Int(costData.requestCounts) ?? 0
+
+                // Add to history for sparkline
+                self.usageHistory = [ProviderUsage(date: Date(), amount: totalCost)]
+            }
+            Log.info("[ZenMux] Daily cost fetch successful. Today usage: \(self.todayUsage)")
+        }
+    }
+
     private func constructCookieHeader(ctoken: String) -> String {
         var cookieParts = ["ctoken=\(ctoken)"]
         if let sid = extractedSessionId { cookieParts.append("sessionId=\(sid)") }
@@ -186,4 +259,20 @@ struct ZenMuxCreditData: Codable {
 struct ZenMuxBalancesMap: Codable {
     let charge: Double?
     let discount: Double?
+}
+
+struct ZenMuxCostResponse: Codable {
+    let success: Bool?
+    let data: ZenMuxCostData?
+}
+
+struct ZenMuxCostData: Codable {
+    let totalCost: String
+    let inputCost: String
+    let outputCost: String
+    let otherCost: String
+    let requestCounts: String
+    let requestAvgCost: String
+    let totalTokens: String
+    let millionTokenAvgCost: String
 }
