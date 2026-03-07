@@ -140,7 +140,6 @@ class ZenMuxProvider: NSObject, AIProviderProtocol, ObservableObject {
                 self.accountId = responseData.accountId
                 self.accountType = responseData.accountType
                 self.oweFeeSum = responseData.oweFeeSum
-                self.balance = responseData.balance
                 self.actualFee = responseData.actualFee
 
                 // Parse balancesMap
@@ -149,8 +148,8 @@ class ZenMuxProvider: NSObject, AIProviderProtocol, ObservableObject {
                     self.discountBalance = balancesMap.discount ?? 0
                 }
 
-                // For display: balance shows the actual available credit
-                self.balance = responseData.balance
+                // Use actualFee as the actual balance (charge + discount)
+                self.balance = responseData.actualFee
             }
             Log.info("[ZenMux] Credits fetch successful. Balance: \(self.balance)")
         }
