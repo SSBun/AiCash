@@ -1,7 +1,10 @@
 title: AiCash
 description: Smart AI Usage Tracker for macOS
 github_repo: SSBun/AiCash
-theme: minima
+
+# Disable default theme
+theme: null
+plugins: []
 
 # Build settings
 markdown: kramdown
@@ -13,10 +16,4 @@ exclude:
   - Gemfile.lock
   - node_modules
   - vendor
-
-# Default values
-defaults:
-  - scope:
-      path: ""
-    values:
-      layout: default
+  - .ruby-version
