@@ -1,6 +1,8 @@
 # AiCash
 
 A beautiful macOS menu bar app to track AI service costs and usage across multiple providers.
+
+**Official Website**: [https://ssbun.github.io/AiCash](https://ssbun.github.io/AiCash)
 <img width="1392" height="1049" alt="image" src="https://github.com/user-attachments/assets/8d95140b-b559-4f08-aee0-6a8245cf52b5" />
 
 
