@@ -1,22 +1,15 @@
 title: AiCash
 description: Smart AI Usage Tracker for macOS
-github_repo: SSBun/AiCash
-
-# Disable default theme
-theme: null
+baseurl: "/AiCash"
+url: "https://ssbun.github.io"
 
 # Build settings
 markdown: kramdown
-permalink: /:title/
-show_drafts: false
-lsi: false
 
-# Collections
-collections: []
-
-# Defaults
-defaults:
-  - scope:
-      path: ""
-    values:
-      layout: default
+# Exclude unnecessary files
+exclude:
+  - Gemfile
+  - Gemfile.lock
+  - node_modules
+  - vendor/
+  - .git/
