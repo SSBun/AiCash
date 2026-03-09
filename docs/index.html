@@ -260,14 +260,6 @@ description: Track and manage your AI API usage across multiple providers. Monit
     font-weight: 600;
 }
 
-.pricing-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 24px;
-    max-width: 900px;
-    margin: 0 auto;
-}
-
 .pricing-card {
     background: var(--surface-elevated);
     border: 1px solid var(--border);
@@ -275,24 +267,6 @@ description: Track and manage your AI API usage across multiple providers. Monit
     padding: 48px;
     text-align: center;
     position: relative;
-}
-
-.pricing-card.featured {
-    border-color: var(--primary);
-    background: linear-gradient(180deg, rgba(99, 102, 241, 0.08) 0%, var(--surface-elevated) 100%);
-}
-
-.pricing-card.featured::before {
-    content: 'Most Popular';
-    position: absolute;
-    top: -12px;
-    left: 50%;
-    transform: translateX(-50%);
-    padding: 6px 16px;
-    background: var(--gradient-1);
-    border-radius: 100px;
-    font-size: 13px;
-    font-weight: 600;
 }
 
 .pricing-card h3 {
@@ -305,12 +279,6 @@ description: Track and manage your AI API usage across multiple providers. Monit
     font-size: 56px;
     font-weight: 800;
     margin: 24px 0;
-}
-
-.pricing-card .price span {
-    font-size: 16px;
-    font-weight: 400;
-    color: var(--text-muted);
 }
 
 .pricing-card ul {
@@ -369,9 +337,6 @@ description: Track and manage your AI API usage across multiple providers. Monit
 @media (max-width: 968px) {
     .features-grid {
         grid-template-columns: repeat(2, 1fr);
-    }
-    .pricing-grid {
-        grid-template-columns: 1fr;
     }
 }
 
@@ -623,36 +588,22 @@ description: Track and manage your AI API usage across multiple providers. Monit
     <div class="container">
         <div class="section-header">
             <div class="section-label">💎 Pricing</div>
-            <h2>Simple, Transparent</h2>
-            <p>Free forever for personal use</p>
+            <h2>100% Free & Open Source</h2>
+            <p>No paid plans. No subscriptions. Forever.</p>
         </div>
-        <div class="pricing-grid">
-            <div class="pricing-card">
-                <h3>Personal</h3>
-                <div class="price">$0<span>/forever</span></div>
-                <ul>
-                    <li>Unlimited providers</li>
-                    <li>Real-time tracking</li>
-                    <li>Cost analytics</li>
-                    <li>Menu bar widget</li>
-                    <li>Usage alerts</li>
-                    <li>Local data storage</li>
-                </ul>
-                <a href="https://github.com/SSBun/AiCash/releases" class="btn btn-secondary" style="width:100%;justify-content:center;">Download Free</a>
-            </div>
-            <div class="pricing-card featured">
-                <h3>Enterprise</h3>
-                <div class="price">Custom</div>
-                <ul>
-                    <li>Everything in Personal</li>
-                    <li>Team management</li>
-                    <li>API access</li>
-                    <li>Priority support</li>
-                    <li>Custom integrations</li>
-                    <li>SLA guarantee</li>
-                </ul>
-                <a href="https://github.com/SSBun/AiCash/issues" class="btn btn-primary" style="width:100%;justify-content:center;">Contact Sales</a>
-            </div>
+        <div class="pricing-card" style="max-width:500px;margin:0 auto;">
+            <h3>Free Forever</h3>
+            <div class="price">$0</div>
+            <ul>
+                <li>Unlimited providers</li>
+                <li>Real-time tracking</li>
+                <li>Cost analytics</li>
+                <li>Menu bar widget</li>
+                <li>Usage alerts</li>
+                <li>Local data storage</li>
+                <li>100% Open Source</li>
+            </ul>
+            <a href="https://github.com/SSBun/AiCash/releases" class="btn btn-primary" style="width:100%;justify-content:center;">Download Free</a>
         </div>
     </div>
 </section>
