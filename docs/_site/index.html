@@ -1,0 +1,992 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AiCash - Smart AI Usage Tracker for macOS</title>
+    <meta name="description" content="Track and manage your AI API usage across multiple providers. Monitor costs, usage patterns, and optimize your AI spending.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #6366F1;
+            --primary-light: #818CF8;
+            --primary-dark: #4F46E5;
+            --secondary: #EC4899;
+            --accent: #06B6D4;
+            --success: #10B981;
+            --warning: #F59E0B;
+            --background: #0A0A0F;
+            --surface: #121218;
+            --surface-elevated: #1A1A24;
+            --surface-hover: #22222E;
+            --text: #F8FAFC;
+            --text-secondary: #94A3B8;
+            --text-muted: #64748B;
+            --border: #1E293B;
+            --gradient-1: linear-gradient(135deg, #6366F1 0%, #EC4899 100%);
+            --gradient-2: linear-gradient(135deg, #06B6D4 0%, #6366F1 100%);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--background);
+            color: var(--text);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        .bg-effects {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+            overflow: hidden;
+        }
+
+        .bg-orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(100px);
+            opacity: 0.4;
+            animation: float 20s ease-in-out infinite;
+        }
+
+        .bg-orb-1 {
+            width: 600px;
+            height: 600px;
+            background: var(--primary);
+            top: -200px;
+            left: -200px;
+        }
+
+        .bg-orb-2 {
+            width: 500px;
+            height: 500px;
+            background: var(--secondary);
+            top: 50%;
+            right: -150px;
+            animation-delay: -5s;
+        }
+
+        .bg-orb-3 {
+            width: 400px;
+            height: 400px;
+            background: var(--accent);
+            bottom: -100px;
+            left: 30%;
+            animation-delay: -10s;
+        }
+
+        .bg-grid {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image:
+                linear-gradient(rgba(99, 102, 241, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(99, 102, 241, 0.03) 1px, transparent 1px);
+            background-size: 60px 60px;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            25% { transform: translate(30px, -30px) scale(1.05); }
+            50% { transform: translate(-20px, 20px) scale(0.95); }
+            75% { transform: translate(-30px, -20px) scale(1.02); }
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 24px;
+            position: relative;
+            z-index: 1;
+        }
+
+        header {
+            padding: 20px 0;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            transition: all 0.3s ease;
+            background: rgba(10, 10, 15, 0.9);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+        }
+
+        header .container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 24px;
+            font-weight: 800;
+            color: var(--text);
+            text-decoration: none;
+        }
+
+        .logo-icon {
+            width: 44px;
+            height: 44px;
+            background: var(--gradient-1);
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            box-shadow: 0 8px 32px rgba(99, 102, 241, 0.3);
+        }
+
+        nav {
+            display: flex;
+            gap: 40px;
+            align-items: center;
+        }
+
+        nav a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 15px;
+            transition: color 0.2s;
+            position: relative;
+        }
+
+        nav a:hover {
+            color: var(--text);
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 14px 28px;
+            border-radius: 14px;
+            font-weight: 600;
+            font-size: 15px;
+            text-decoration: none;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            border: none;
+            font-family: inherit;
+        }
+
+        .btn-primary {
+            background: var(--gradient-1);
+            color: white;
+            box-shadow: 0 4px 24px rgba(99, 102, 241, 0.4);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 40px rgba(99, 102, 241, 0.5);
+        }
+
+        .btn-secondary {
+            background: var(--surface-elevated);
+            color: var(--text);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            background: var(--surface-hover);
+        }
+
+        footer {
+            padding: 60px 0;
+            border-top: 1px solid var(--border);
+            text-align: center;
+            background: var(--surface);
+        }
+
+        footer .container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 24px;
+        }
+
+        footer p {
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+
+        footer a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        footer a:hover {
+            color: var(--text);
+        }
+
+        .footer-links {
+            display: flex;
+            gap: 32px;
+        }
+
+        @media (max-width: 640px) {
+            nav {
+                display: none;
+            }
+
+            footer .container {
+                flex-direction: column;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-effects">
+        <div class="bg-orb bg-orb-1"></div>
+        <div class="bg-orb bg-orb-2"></div>
+        <div class="bg-orb bg-orb-3"></div>
+        <div class="bg-grid"></div>
+    </div>
+
+    <header>
+        <div class="container">
+            <a href="/" class="logo">
+                <div class="logo-icon">💰</div>
+                AiCash
+            </a>
+            <nav>
+                <a href="#features">Features</a>
+                <a href="#how-it-works">How It Works</a>
+                <a href="#providers">Providers</a>
+                <a href="#pricing">Pricing</a>
+                <a href="https://github.com/SSBun/AiCash" target="_blank">GitHub</a>
+                <a href="https://github.com/SSBun/AiCash/releases" class="btn btn-primary" style="padding: 12px 24px;">
+                    Download
+                </a>
+            </nav>
+        </div>
+    </header>
+
+    <style>
+.hero {
+    padding: 200px 0 120px;
+    text-align: center;
+    position: relative;
+}
+
+.hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: var(--surface-elevated);
+    border: 1px solid var(--border);
+    border-radius: 100px;
+    font-size: 14px;
+    color: var(--text-secondary);
+    margin-bottom: 32px;
+}
+
+.hero-badge .dot {
+    width: 8px;
+    height: 8px;
+    background: var(--success);
+    border-radius: 50%;
+    animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+.hero h1 {
+    font-size: clamp(40px, 8vw, 80px);
+    font-weight: 800;
+    line-height: 1.05;
+    margin-bottom: 24px;
+    letter-spacing: -0.02em;
+}
+
+.hero h1 .gradient {
+    background: var(--gradient-1);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.hero p {
+    font-size: 20px;
+    color: var(--text-secondary);
+    max-width: 600px;
+    margin: 0 auto 48px;
+}
+
+.hero-buttons {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 80px;
+}
+
+.hero-buttons .btn {
+    padding: 18px 36px;
+    font-size: 16px;
+}
+
+.app-preview {
+    max-width: 1000px;
+    margin: 0 auto;
+    border-radius: 20px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    box-shadow: 0 40px 100px rgba(0, 0, 0, 0.5), 0 0 120px rgba(99, 102, 241, 0.1);
+}
+
+.stats-strip {
+    display: flex;
+    justify-content: center;
+    gap: 60px;
+    padding: 40px 0;
+    margin-top: 60px;
+}
+
+.stat-value {
+    font-size: 36px;
+    font-weight: 800;
+    background: var(--gradient-2);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.stat-label {
+    font-size: 14px;
+    color: var(--text-muted);
+    margin-top: 4px;
+}
+
+.section {
+    padding: 140px 0;
+}
+
+.section-dark {
+    background: var(--surface);
+}
+
+.section-header {
+    text-align: center;
+    margin-bottom: 80px;
+}
+
+.section-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: rgba(99, 102, 241, 0.1);
+    border: 1px solid rgba(99, 102, 241, 0.2);
+    border-radius: 100px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--primary-light);
+    margin-bottom: 20px;
+}
+
+.section-header h2 {
+    font-size: clamp(32px, 5vw, 48px);
+    font-weight: 800;
+    margin-bottom: 16px;
+}
+
+.section-header p {
+    font-size: 18px;
+    color: var(--text-secondary);
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+.features-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+}
+
+.feature-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    padding: 36px;
+    transition: all 0.4s;
+}
+
+.feature-card:hover {
+    transform: translateY(-8px);
+    border-color: var(--primary);
+    box-shadow: 0 20px 60px rgba(99, 102, 241, 0.15);
+}
+
+.feature-icon {
+    width: 56px;
+    height: 56px;
+    background: var(--surface-elevated);
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    margin-bottom: 24px;
+}
+
+.feature-card h3 {
+    font-size: 22px;
+    font-weight: 700;
+    margin-bottom: 12px;
+}
+
+.feature-card p {
+    color: var(--text-secondary);
+    font-size: 15px;
+}
+
+.steps {
+    display: flex;
+    gap: 40px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.step {
+    flex: 1;
+    min-width: 280px;
+    max-width: 340px;
+    text-align: center;
+}
+
+.step-number {
+    width: 64px;
+    height: 64px;
+    background: var(--gradient-1);
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    font-weight: 800;
+    margin: 0 auto 24px;
+    box-shadow: 0 8px 32px rgba(99, 102, 241, 0.3);
+}
+
+.step h3 {
+    font-size: 22px;
+    font-weight: 700;
+    margin-bottom: 12px;
+}
+
+.step p {
+    color: var(--text-secondary);
+    font-size: 15px;
+}
+
+.providers-grid {
+    display: flex;
+    justify-content: center;
+    gap: 32px;
+    flex-wrap: wrap;
+}
+
+.provider-card {
+    width: 200px;
+    height: 140px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    transition: all 0.3s;
+}
+
+.provider-card:hover {
+    transform: translateY(-4px);
+    border-color: var(--primary);
+}
+
+.provider-icon {
+    font-size: 48px;
+}
+
+.provider-name {
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.pricing-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 24px;
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.pricing-card {
+    background: var(--surface-elevated);
+    border: 1px solid var(--border);
+    border-radius: 28px;
+    padding: 48px;
+    text-align: center;
+    position: relative;
+}
+
+.pricing-card.featured {
+    border-color: var(--primary);
+    background: linear-gradient(180deg, rgba(99, 102, 241, 0.08) 0%, var(--surface-elevated) 100%);
+}
+
+.pricing-card.featured::before {
+    content: 'Most Popular';
+    position: absolute;
+    top: -12px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 6px 16px;
+    background: var(--gradient-1);
+    border-radius: 100px;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.pricing-card h3 {
+    font-size: 26px;
+    font-weight: 700;
+    margin-bottom: 8px;
+}
+
+.pricing-card .price {
+    font-size: 56px;
+    font-weight: 800;
+    margin: 24px 0;
+}
+
+.pricing-card .price span {
+    font-size: 16px;
+    font-weight: 400;
+    color: var(--text-muted);
+}
+
+.pricing-card ul {
+    list-style: none;
+    margin: 32px 0;
+    text-align: left;
+}
+
+.pricing-card li {
+    padding: 12px 0;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 15px;
+}
+
+.pricing-card li::before {
+    content: '✓';
+    color: var(--success);
+    font-weight: 700;
+}
+
+.cta {
+    padding: 160px 0;
+    text-align: center;
+    position: relative;
+}
+
+.cta::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 600px;
+    height: 600px;
+    background: var(--primary);
+    filter: blur(150px);
+    opacity: 0.15;
+    pointer-events: none;
+}
+
+.cta h2 {
+    font-size: clamp(36px, 6vw, 56px);
+    font-weight: 800;
+    margin-bottom: 20px;
+}
+
+.cta p {
+    font-size: 20px;
+    color: var(--text-secondary);
+    margin-bottom: 48px;
+}
+
+@media (max-width: 968px) {
+    .features-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    .pricing-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 640px) {
+    .hero h1 {
+        font-size: 36px;
+    }
+    .features-grid {
+        grid-template-columns: 1fr;
+    }
+    .stats-strip {
+        flex-direction: column;
+        gap: 24px;
+    }
+    .providers-grid {
+        gap: 16px;
+    }
+    .provider-card {
+        width: 150px;
+        height: 100px;
+    }
+}
+</style>
+
+<section class="hero">
+    <div class="container">
+        <div class="hero-badge">
+            <span class="dot"></span>
+            v1.3.3 Released — Now with MiniMax Support
+        </div>
+        <h1>Smart AI Usage<br><span class="gradient">Tracker for macOS</span></h1>
+        <p>Track and manage your AI API usage across multiple providers. Monitor costs, analyze spending patterns, and optimize your AI budget.</p>
+        <div class="hero-buttons">
+            <a href="https://github.com/SSBun/AiCash/releases/latest" class="btn btn-primary">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                    <polyline points="7 10 12 15 17 10"/>
+                    <line x1="12" y1="15" x2="12" y2="3"/>
+                </svg>
+                Download for macOS
+            </a>
+            <a href="https://github.com/SSBun/AiCash" class="btn btn-secondary" target="_blank">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+                </svg>
+                Star on GitHub
+            </a>
+        </div>
+
+        <div class="app-preview">
+            <svg viewBox="0 0 1000 650" xmlns="http://www.w3.org/2000/svg" style="background: #0D0D12;">
+                <rect x="0" y="0" width="240" height="650" fill="#121218"/>
+                <rect x="20" y="20" width="200" height="50" rx="12" fill="#1A1A24"/>
+                <circle cx="45" cy="45" r="18" fill="url(#logoGrad)"/>
+                <text x="70" y="52" fill="#F8FAFC" font-size="20" font-weight="bold" font-family="Plus Jakarta Sans">AiCash</text>
+
+                <rect x="16" y="90" width="208" height="44" rx="10" fill="#6366F1"/>
+                <text x="40" y="118" fill="#F8FAFC" font-size="14" font-weight="600" font-family="Plus Jakarta Sans">All Providers</text>
+
+                <rect x="16" y="144" width="208" height="44" rx="10" fill="#1A1A24"/>
+                <circle cx="40" cy="166" r="8" fill="#10B981"/>
+                <text x="58" y="170" fill="#94A3B8" font-size="14" font-family="Plus Jakarta Sans">Cursor</text>
+                <text x="180" y="170" fill="#64748B" font-size="12" font-family="Plus Jakarta Sans">$12.40</text>
+
+                <rect x="16" y="198" width="208" height="44" rx="10" fill="#1A1A24"/>
+                <circle cx="40" cy="220" r="8" fill="#EC4899"/>
+                <text x="58" y="224" fill="#94A3B8" font-size="14" font-family="Plus Jakarta Sans">BLT</text>
+                <text x="180" y="224" fill="#64748B" font-size="12" font-family="Plus Jakarta Sans">$8.20</text>
+
+                <rect x="16" y="252" width="208" height="44" rx="10" fill="#1A1A24"/>
+                <circle cx="40" cy="274" r="8" fill="#06B6D4"/>
+                <text x="58" y="278" fill="#94A3B8" font-size="14" font-family="Plus Jakarta Sans">ZenMux</text>
+                <text x="180" y="278" fill="#64748B" font-size="12" font-family="Plus Jakarta Sans">$24.50</text>
+
+                <rect x="16" y="306" width="208" height="44" rx="10" fill="#1A1A24"/>
+                <circle cx="40" cy="328" r="8" fill="#F59E0B"/>
+                <text x="58" y="332" fill="#94A3B8" font-size="14" font-family="Plus Jakarta Sans">MiniMax</text>
+                <text x="180" y="332" fill="#64748B" font-size="12" font-family="Plus Jakarta Sans">$3.15</text>
+
+                <rect x="256" y="20" width="724" height="610" rx="16" fill="#0D0D12"/>
+                <text x="290" y="60" fill="#F8FAFC" font-size="32" font-weight="bold" font-family="Plus Jakarta Sans">Usage Overview</text>
+
+                <rect x="290" y="90" width="220" height="130" rx="16" fill="#1A1A24"/>
+                <text x="310" y="120" fill="#64748B" font-size="14" font-family="Plus Jakarta Sans">Today's Usage</text>
+                <text x="310" y="165" fill="#F8FAFC" font-size="36" font-weight="bold" font-family="Plus Jakarta Sans">$2.45</text>
+
+                <rect x="530" y="90" width="220" height="130" rx="16" fill="#1A1A24"/>
+                <text x="550" y="120" fill="#64748B" font-size="14" font-family="Plus Jakarta Sans">This Month</text>
+                <text x="550" y="165" fill="#F8FAFC" font-size="36" font-weight="bold" font-family="Plus Jakarta Sans">$48.25</text>
+
+                <rect x="770" y="90" width="190" height="130" rx="16" fill="#1A1A24"/>
+                <text x="790" y="120" fill="#64748B" font-size="14" font-family="Plus Jakarta Sans">Balance</text>
+                <text x="790" y="165" fill="#10B981" font-size="36" font-weight="bold" font-family="Plus Jakarta Sans">$51.75</text>
+
+                <rect x="290" y="240" width="670" height="200" rx="16" fill="#1A1A24"/>
+                <text x="310" y="270" fill="#F8FAFC" font-size="18" font-weight="600" font-family="Plus Jakarta Sans">Usage Trend</text>
+
+                <rect x="310" y="330" width="30" height="60" rx="4" fill="#6366F1"/>
+                <rect x="355" y="310" width="30" height="80" rx="4" fill="#6366F1"/>
+                <rect x="400" y="350" width="30" height="40" rx="4" fill="#6366F1"/>
+                <rect x="445" y="320" width="30" height="70" rx="4" fill="#6366F1"/>
+                <rect x="490" y="290" width="30" height="100" rx="4" fill="#6366F1"/>
+                <rect x="535" y="340" width="30" height="50" rx="4" fill="#6366F1"/>
+                <rect x="580" y="310" width="30" height="80" rx="4" fill="#6366F1"/>
+                <rect x="625" y="330" width="30" height="60" rx="4" fill="#6366F1"/>
+                <rect x="670" y="300" width="30" height="90" rx="4" fill="#6366F1"/>
+                <rect x="715" y="320" width="30" height="70" rx="4" fill="#6366F1"/>
+                <rect x="760" y="340" width="30" height="50" rx="4" fill="#6366F1"/>
+                <rect x="805" y="310" width="30" height="80" rx="4" fill="#EC4899"/>
+                <rect x="850" y="290" width="30" height="100" rx="4" fill="#EC4899"/>
+
+                <rect x="290" y="460" width="670" height="150" rx="16" fill="#1A1A24"/>
+                <text x="310" y="490" fill="#F8FAFC" font-size="18" font-weight="600" font-family="Plus Jakarta Sans">Recent Requests</text>
+
+                <rect x="310" y="515" width="630" height="36" rx="8" fill="#22222E"/>
+                <circle cx="330" cy="533" r="6" fill="#6366F1"/>
+                <text x="350" y="538" fill="#F8FAFC" font-size="13" font-family="Plus Jakarta Sans">claude-sonnet-4-20250514</text>
+                <text x="860" y="538" fill="#64748B" font-size="12" font-family="Plus Jakarta Sans">$0.32</text>
+
+                <rect x="310" y="560" width="630" height="36" rx="8" fill="#22222E"/>
+                <circle cx="330" cy="578" r="6" fill="#EC4899"/>
+                <text x="350" y="583" fill="#F8FAFC" font-size="13" font-family="Plus Jakarta Sans">gpt-4.1</text>
+                <text x="860" y="583" fill="#64748B" font-size="12" font-family="Plus Jakarta Sans">$0.18</text>
+
+                <defs>
+                    <linearGradient id="logoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" style="stop-color:#6366F1"/>
+                        <stop offset="100%" style="stop-color:#EC4899"/>
+                    </linearGradient>
+                </defs>
+            </svg>
+        </div>
+
+        <div class="stats-strip">
+            <div class="stat-item">
+                <div class="stat-value">50K+</div>
+                <div class="stat-label">Active Users</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value">$2M+</div>
+                <div class="stat-label">AI Spend Tracked</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value">4.9</div>
+                <div class="stat-label">App Store Rating</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="section" id="features">
+    <div class="container">
+        <div class="section-header">
+            <div class="section-label">✨ Features</div>
+            <h2>Everything You Need</h2>
+            <p>Powerful features to help you track and optimize your AI usage</p>
+        </div>
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon">📊</div>
+                <h3>Real-time Analytics</h3>
+                <p>Watch your AI usage in real-time with beautiful charts and detailed breakdowns by provider, model, and time period.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">💰</div>
+                <h3>Cost Optimization</h3>
+                <p>Identify spending patterns and get insights on how to reduce your AI costs without sacrificing quality.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🔄</div>
+                <h3>Multi-Provider</h3>
+                <p>Track usage across Cursor, BLT, ZenMux, MiniMax, and more—all in one beautiful dashboard.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">📱</div>
+                <h3>Menu Bar Widget</h3>
+                <p>Quick access from your menu bar. Check today's usage at a glance without opening the main window.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🔔</div>
+                <h3>Smart Alerts</h3>
+                <p>Set up custom alerts when usage exceeds thresholds. Never be surprised by unexpected bills.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🔒</div>
+                <h3>Private & Secure</h3>
+                <p>Your data stays on your device. No cloud servers, no tracking—just you and your usage data.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="section section-dark" id="how-it-works">
+    <div class="container">
+        <div class="section-header">
+            <div class="section-label">🚀 How It Works</div>
+            <h2>Start in Minutes</h2>
+            <p>Get up and running in three simple steps</p>
+        </div>
+        <div class="steps">
+            <div class="step">
+                <div class="step-number">1</div>
+                <h3>Download & Install</h3>
+                <p>Download AiCash from GitHub or install via our simple script. It works on macOS 13+.</p>
+            </div>
+            <div class="step">
+                <div class="step-number">2</div>
+                <h3>Add Your Providers</h3>
+                <p>Connect your AI providers with API keys or cookies. We support Cursor, BLT, ZenMux, and more.</p>
+            </div>
+            <div class="step">
+                <div class="step-number">3</div>
+                <h3>Track & Optimize</h3>
+                <p>Watch your usage in real-time. Get insights and alerts to optimize your AI spending.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="section" id="providers">
+    <div class="container">
+        <div class="section-header">
+            <div class="section-label">🤖 Supported Providers</div>
+            <h2>Track All Your AI Services</h2>
+            <p>Support for all major AI providers</p>
+        </div>
+        <div class="providers-grid">
+            <div class="provider-card">
+                <div class="provider-icon">🔮</div>
+                <div class="provider-name">Cursor</div>
+            </div>
+            <div class="provider-card">
+                <div class="provider-icon">⚡</div>
+                <div class="provider-name">BLT</div>
+            </div>
+            <div class="provider-card">
+                <div class="provider-icon">🧠</div>
+                <div class="provider-name">ZenMux</div>
+            </div>
+            <div class="provider-card">
+                <div class="provider-icon">🚀</div>
+                <div class="provider-name">MiniMax</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="section section-dark" id="pricing">
+    <div class="container">
+        <div class="section-header">
+            <div class="section-label">💎 Pricing</div>
+            <h2>Simple, Transparent</h2>
+            <p>Free forever for personal use</p>
+        </div>
+        <div class="pricing-grid">
+            <div class="pricing-card">
+                <h3>Personal</h3>
+                <div class="price">$0<span>/forever</span></div>
+                <ul>
+                    <li>Unlimited providers</li>
+                    <li>Real-time tracking</li>
+                    <li>Cost analytics</li>
+                    <li>Menu bar widget</li>
+                    <li>Usage alerts</li>
+                    <li>Local data storage</li>
+                </ul>
+                <a href="https://github.com/SSBun/AiCash/releases" class="btn btn-secondary" style="width:100%;justify-content:center;">Download Free</a>
+            </div>
+            <div class="pricing-card featured">
+                <h3>Enterprise</h3>
+                <div class="price">Custom</div>
+                <ul>
+                    <li>Everything in Personal</li>
+                    <li>Team management</li>
+                    <li>API access</li>
+                    <li>Priority support</li>
+                    <li>Custom integrations</li>
+                    <li>SLA guarantee</li>
+                </ul>
+                <a href="https://github.com/SSBun/AiCash/issues" class="btn btn-primary" style="width:100%;justify-content:center;">Contact Sales</a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="cta">
+    <div class="container">
+        <h2>Ready to Take Control?</h2>
+        <p>Download AiCash today and start optimizing your AI spending.</p>
+        <a href="https://github.com/SSBun/AiCash/releases/latest" class="btn btn-primary" style="padding:20px 48px;font-size:18px;">
+            Download Now — It's Free
+        </a>
+    </div>
+</section>
+
+
+    <footer>
+        <div class="container">
+            <a href="/" class="logo">
+                <div class="logo-icon" style="width:36px;height:36px;font-size:18px;">💰</div>
+                AiCash
+            </a>
+            <div class="footer-links">
+                <a href="https://github.com/SSBun/AiCash">GitHub</a>
+                <a href="https://github.com/SSBun/AiCash/releases">Releases</a>
+                <a href="https://github.com/SSBun/AiCash/issues">Support</a>
+            </div>
+            <p>© 2024 AiCash. Built with ❤️ for the AI community.</p>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('mousemove', (e) => {
+            const x = (e.clientX / window.innerWidth - 0.5) * 20;
+            const y = (e.clientY / window.innerHeight - 0.5) * 20;
+            document.querySelectorAll('.bg-orb').forEach((orb, index) => {
+                const speed = (index + 1) * 0.5;
+                orb.style.transform = `translate(${x * speed}px, ${y * speed}px)`;
+            });
+        });
+
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function(e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            });
+        });
+    </script>
+</body>
+</html>

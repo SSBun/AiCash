@@ -4,16 +4,19 @@ github_repo: SSBun/AiCash
 
 # Disable default theme
 theme: null
-plugins: []
 
 # Build settings
 markdown: kramdown
 permalink: /:title/
+show_drafts: false
+lsi: false
 
-# Exclude unnecessary files
-exclude:
-  - Gemfile
-  - Gemfile.lock
-  - node_modules
-  - vendor
-  - .ruby-version
+# Collections
+collections: []
+
+# Defaults
+defaults:
+  - scope:
+      path: ""
+    values:
+      layout: default
