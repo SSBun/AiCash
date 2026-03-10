@@ -6,40 +6,60 @@ struct ContentView: View {
     @State private var hasRefreshed = false
 
     var body: some View {
-        NavigationSplitView(columnVisibility: $columnVisibility) {
-            ProviderListView(viewModel: viewModel)
-                .navigationSplitViewColumnWidth(min: 250, ideal: 320, max: 400)
-                .task {
-                    if !hasRefreshed && !viewModel.providers.isEmpty {
-                        hasRefreshed = true
-                        await viewModel.refreshAll()
-                    }
+        ZStack {
+            DesignSystem.background
+                .ignoresSafeArea()
+
+            NavigationSplitView(columnVisibility: $columnVisibility) {
+                ProviderListView(viewModel: viewModel)
+                    .navigationSplitViewColumnWidth(min: 280, ideal: 340, max: 420)
+                    .task {
+                        if !hasRefreshed && !viewModel.providers.isEmpty {
+                            hasRefreshed = true
+                            await viewModel.refreshAll()
+                        }
                 }
-        } detail: {
-            if let provider = viewModel.selectedProvider {
-                ProviderDetailView(provider: provider)
-                    .id(provider.id) // Force view refresh when provider changes
-            } else {
-                VStack {
-                    Image(systemName: "chart.bar.xaxis")
-                        .font(.system(size: 64))
-                        .foregroundColor(.gray.opacity(0.3))
-                        .padding(.bottom, 16)
-                    Text("Select a provider to see details")
-                        .font(.title3)
-                        .foregroundColor(.gray)
+            } detail: {
+                if let provider = viewModel.selectedProvider {
+                    ProviderDetailView(provider: provider)
+                        .id(provider.id)
+                } else {
+                    emptyStateView
                 }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
+            .navigationSplitViewStyle(.balanced)
+            .preferredColorScheme(.dark)
         }
-        .navigationSplitViewStyle(.balanced)
-        .preferredColorScheme(.dark)
-        .background(.ultraThinMaterial)
         .onChange(of: viewModel.selectedProvider?.id) { _, newValue in
             if newValue != nil {
                 columnVisibility = .all
             }
         }
+    }
+
+    private var emptyStateView: some View {
+        VStack(spacing: 24) {
+            ZStack {
+                Circle()
+                    .fill(DesignSystem.surface)
+                    .frame(width: 120, height: 120)
+
+                Image(systemName: "chart.bar.xaxis")
+                    .font(.system(size: 48, weight: .light))
+                    .foregroundColor(DesignSystem.textMuted)
+            }
+
+            VStack(spacing: 8) {
+                Text("Select a provider")
+                    .font(DesignSystem.displayFont(size: 20, weight: .semibold))
+                    .foregroundColor(DesignSystem.textPrimary)
+
+                Text("Choose from the list to view detailed usage")
+                    .font(.system(size: 14, weight: .regular))
+                    .foregroundColor(DesignSystem.textMuted)
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }
 

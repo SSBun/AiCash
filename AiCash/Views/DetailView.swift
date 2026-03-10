@@ -1,6 +1,8 @@
 import SwiftUI
 import Charts
 
+// MARK: - DailyCost Model
+
 struct DailyCost: Identifiable {
     let id = UUID()
     let date: Date
@@ -10,21 +12,19 @@ struct DailyCost: Identifiable {
 struct DetailView<Provider: AIProviderProtocol>: View {
     @ObservedObject var provider: Provider
     @State private var refreshRotation: Double = 0
+    @State private var contentOpacity: Double = 0
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: 24) {
+        ScrollView(.vertical, showsIndicators: true) {
+            VStack(spacing: 32) {
                 headerSection
 
                 if let error = provider.errorMessage {
-                    Text(error)
-                        .foregroundColor(.red)
-                        .font(.caption)
-                        .padding(.horizontal)
+                    errorBanner(error)
                 }
 
-                Divider()
-                    .padding(.horizontal)
+                // Dramatic accent divider
+                accentDivider
 
                 usageOverviewSection
 
@@ -34,80 +34,149 @@ struct DetailView<Provider: AIProviderProtocol>: View {
                     usageEventsSection
                 }
 
-                Spacer()
+                Spacer(minLength: 40)
             }
+            .frame(maxWidth: .infinity)
         }
-        .background(Color(red: 0.05, green: 0.05, blue: 0.05))
+    }
+
+    private func errorBanner(_ message: String) -> some View {
+        HStack(spacing: 12) {
+            Image(systemName: "exclamationmark.triangle.fill")
+                .foregroundColor(DesignSystem.error)
+
+            Text(message)
+                .font(.system(size: 13, weight: .medium))
+                .foregroundColor(DesignSystem.error.opacity(0.9))
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(DesignSystem.error.opacity(0.1))
+        .cornerRadius(12)
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(DesignSystem.error.opacity(0.3), lineWidth: 1)
+        )
+        .padding(.horizontal)
+    }
+
+    private var accentDivider: some View {
+        HStack(spacing: 8) {
+            Rectangle()
+                .fill(DesignSystem.primary)
+                .frame(width: 40, height: 3)
+                .cornerRadius(1.5)
+
+            Rectangle()
+                .fill(DesignSystem.primary.opacity(0.5))
+                .frame(height: 1)
+
+            Rectangle()
+                .fill(DesignSystem.primary.opacity(0.2))
+                .frame(height: 1)
+        }
+        .padding(.horizontal, 20)
     }
 
     private var headerSection: some View {
-        HStack(alignment: .bottom) {
-            VStack(alignment: .leading, spacing: 4) {
+        HStack(alignment: .bottom, spacing: 0) {
+            // Provider info with dramatic typography
+            VStack(alignment: .leading, spacing: 6) {
                 Text(provider.fullName)
-                    .font(.system(size: 28, weight: .bold))
+                    .font(DesignSystem.displayFont(size: 32, weight: .bold))
+                    .foregroundColor(DesignSystem.textPrimary)
+
                 Text(provider.symbol)
-                    .font(.system(size: 18))
-                    .foregroundColor(.gray)
+                    .font(.system(size: 16, weight: .medium))
+                    .foregroundColor(DesignSystem.textMuted)
             }
 
             Spacer()
 
-            if provider.isLoading {
-                ProgressView()
-                    .scaleEffect(0.8)
-                    .padding(.trailing, 8)
-            }
+            // Balance display with gold accent
+            VStack(alignment: .trailing, spacing: 6) {
+                HStack(alignment: .bottom, spacing: 4) {
+                    Text(provider.balanceString)
+                        .font(DesignSystem.displayFont(size: 36, weight: .bold))
+                        .foregroundColor(DesignSystem.primary)
 
-            VStack(alignment: .trailing, spacing: 4) {
-                Text(provider.balanceString)
-                    .font(.system(size: 32, weight: .bold))
+                    Text("USD")
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundColor(DesignSystem.textMuted)
+                        .padding(.bottom, 6)
+                }
 
-                HStack(spacing: 4) {
+                HStack(spacing: 6) {
                     Image(systemName: "arrow.up.right")
+                        .font(.system(size: 12, weight: .bold))
                     Text(provider.todayUsageString)
                 }
-                .font(.system(size: 16, weight: .semibold))
-                .foregroundColor(.red)
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundColor(DesignSystem.error)
             }
 
+            // Refresh button
             Button(action: {
-                withAnimation(.easeInOut(duration: 0.6)) {
+                withAnimation(.easeOut(duration: 0.6)) {
                     refreshRotation += 360
                 }
                 Task {
                     await provider.fetchData()
                 }
             }) {
-                Image(systemName: "arrow.clockwise")
-                    .font(.system(size: 14, weight: .bold))
-                    .foregroundColor(.gray)
-                    .padding(8)
-                    .background(Color.white.opacity(0.1))
-                    .clipShape(Circle())
-                    .rotationEffect(.degrees(refreshRotation))
+                Group {
+                    if provider.isLoading {
+                        ProgressView()
+                            .scaleEffect(0.6)
+                    } else {
+                        Image(systemName: "arrow.clockwise")
+                            .font(.system(size: 14, weight: .bold))
+                            .foregroundColor(DesignSystem.textMuted)
+                    }
+                }
+                .frame(width: 36, height: 36)
+                .background(DesignSystem.surface)
+                .clipShape(Circle())
+                .overlay(
+                    Circle()
+                        .stroke(DesignSystem.surfaceHover, lineWidth: 1)
+                )
+                .rotationEffect(.degrees(refreshRotation))
             }
             .buttonStyle(.plain)
             .padding(.leading, 16)
-            .padding(.bottom, 8)
-            .help("Refresh")
+            .help("Refresh data")
         }
-        .padding(.horizontal)
-        .padding(.top, 20)
+        .padding(.horizontal, 24)
+        .padding(.top, 28)
     }
 
     private var usageOverviewSection: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text("Usage Overview")
-                .font(.system(size: 20, weight: .bold))
-                .padding(.horizontal)
+        VStack(alignment: .leading, spacing: 20) {
+            // Section header with dramatic styling
+            HStack {
+                Text("Usage Overview")
+                    .font(DesignSystem.displayFont(size: 20, weight: .bold))
+                    .foregroundColor(DesignSystem.textPrimary)
 
+                Spacer()
+
+                // Subtle accent indicator
+                Circle()
+                    .fill(DesignSystem.primary)
+                    .frame(width: 8, height: 8)
+            }
+            .padding(.horizontal, 24)
+
+            // Usage cards with dramatic styling
             if !(provider is BLTProvider) {
                 HStack(spacing: 16) {
                     UsageCard(
                         title: "Included Usage",
                         value: "$\(String(format: "%.2f", provider.includedUsage))",
                         limit: "$\(String(format: "%.0f", provider.includedLimit))",
-                        progress: provider.includedLimit > 0 ? provider.includedUsage / provider.includedLimit : 0
+                        progress: provider.includedLimit > 0 ? provider.includedUsage / provider.includedLimit : 0,
+                        accentColor: DesignSystem.primary
                     )
 
                     UsageCard(
@@ -115,10 +184,11 @@ struct DetailView<Provider: AIProviderProtocol>: View {
                         value: "$\(String(format: "%.2f", provider.onDemandUsage))",
                         limit: "Unlimited",
                         progress: 0,
-                        isUnlimited: true
+                        isUnlimited: true,
+                        accentColor: DesignSystem.success
                     )
                 }
-                .padding(.horizontal)
+                .padding(.horizontal, 24)
             } else {
                 HStack(spacing: 16) {
                     UsageCard(
@@ -126,7 +196,8 @@ struct DetailView<Provider: AIProviderProtocol>: View {
                         value: "$\(String(format: "%.2f", provider.includedUsage))",
                         limit: "Total",
                         progress: 0,
-                        isUnlimited: true
+                        isUnlimited: true,
+                        accentColor: DesignSystem.warning
                     )
 
                     UsageCard(
@@ -134,18 +205,38 @@ struct DetailView<Provider: AIProviderProtocol>: View {
                         value: "$\(String(format: "%.2f", provider.balance))",
                         limit: "Current",
                         progress: 0,
-                        isUnlimited: true
+                        isUnlimited: true,
+                        accentColor: DesignSystem.success
                     )
                 }
-                .padding(.horizontal)
+                .padding(.horizontal, 24)
             }
 
+            // Charts
             if !provider.usageHistory.isEmpty {
-                usageChart
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("Usage Trend")
+                        .font(DesignSystem.displayFont(size: 16, weight: .semibold))
+                        .foregroundColor(DesignSystem.textSecondary)
+                        .padding(.horizontal, 24)
+
+                    usageChart
+                        .padding(.horizontal, 24)
+                }
+                .padding(.top, 8)
             }
 
             if !dailyCostData.isEmpty {
-                dailyCostChart
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("Daily Cost")
+                        .font(DesignSystem.displayFont(size: 16, weight: .semibold))
+                        .foregroundColor(DesignSystem.textSecondary)
+                        .padding(.horizontal, 24)
+
+                    dailyCostChart
+                        .padding(.horizontal, 24)
+                }
+                .padding(.top, 8)
             }
         }
     }
@@ -163,40 +254,36 @@ struct DetailView<Provider: AIProviderProtocol>: View {
 
     private var dailyCostChart: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Daily Cost")
-                .font(.system(size: 16, weight: .semibold))
-                .foregroundColor(.secondary)
-                .padding(.horizontal)
-
             Chart(dailyCostData) { item in
                 BarMark(
                     x: .value("Date", item.date),
                     y: .value("Cost", item.amount),
-                    width: .fixed(40)
+                    width: .fixed(32)
                 )
-                .foregroundStyle(Color.red.opacity(0.8))
+                .foregroundStyle(DesignSystem.primary.opacity(0.7))
                 .cornerRadius(4)
-                .annotation(position: .top) {
-                    Text("$\(String(format: "%.2f", item.amount))")
-                        .font(.system(size: 10, weight: .medium))
-                        .foregroundColor(.white)
-                }
             }
             .chartYAxis {
-                AxisMarks(position: .leading, values: .automatic) { _ in
+                AxisMarks(position: .leading, values: .automatic) { value in
                     AxisGridLine()
-                    AxisValueLabel(format: .currency(code: "USD"))
+                        .foregroundStyle(DesignSystem.surfaceHover)
+                    AxisValueLabel()
+                        .foregroundStyle(DesignSystem.textMuted)
                 }
             }
             .chartXAxis {
                 AxisMarks(values: .stride(by: .day, count: 1)) { _ in
                     AxisGridLine()
+                        .foregroundStyle(DesignSystem.surfaceHover)
                     AxisValueLabel(format: .dateTime.month(.abbreviated).day())
+                        .foregroundStyle(DesignSystem.textMuted)
                 }
             }
-            .frame(height: 200)
-            .padding(.horizontal)
+            .frame(height: 180)
         }
+        .padding(20)
+        .background(DesignSystem.surface)
+        .cornerRadius(16)
     }
 
     private var usageChart: some View {
@@ -206,7 +293,8 @@ struct DetailView<Provider: AIProviderProtocol>: View {
                     x: .value("Time", usage.date),
                     y: .value("Usage", usage.amount)
                 )
-                .foregroundStyle(Color.red)
+                .foregroundStyle(DesignSystem.error)
+                .lineStyle(StrokeStyle(lineWidth: 2.5, lineCap: .round))
 
                 AreaMark(
                     x: .value("Time", usage.date),
@@ -215,8 +303,8 @@ struct DetailView<Provider: AIProviderProtocol>: View {
                 .foregroundStyle(
                     LinearGradient(
                         colors: [
-                            Color.red.opacity(0.2),
-                            Color.red.opacity(0.0)
+                            DesignSystem.error.opacity(0.3),
+                            DesignSystem.error.opacity(0.0)
                         ],
                         startPoint: .top,
                         endPoint: .bottom
@@ -224,73 +312,123 @@ struct DetailView<Provider: AIProviderProtocol>: View {
                 )
             }
         }
-        .frame(height: 200)
-        .padding(.horizontal)
+        .frame(height: 180)
+        .chartYAxis {
+            AxisMarks(position: .leading) { _ in
+                AxisGridLine()
+                    .foregroundStyle(DesignSystem.surfaceHover)
+                AxisValueLabel()
+                    .foregroundStyle(DesignSystem.textMuted)
+            }
+        }
+        .chartXAxis {
+            AxisMarks { _ in
+                AxisGridLine()
+                    .foregroundStyle(DesignSystem.surfaceHover)
+                AxisValueLabel()
+                    .foregroundStyle(DesignSystem.textMuted)
+            }
+        }
+        .padding(20)
+        .background(DesignSystem.surface)
+        .cornerRadius(16)
     }
 
     private var usageEventsSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Recent Events")
-                .font(.system(size: 20, weight: .bold))
-                .padding(.horizontal)
+        VStack(alignment: .leading, spacing: 16) {
+            // Section header
+            HStack {
+                Text("Recent Events")
+                    .font(DesignSystem.displayFont(size: 20, weight: .bold))
+                    .foregroundColor(DesignSystem.textPrimary)
 
+                Spacer()
+
+                Text("\(provider.usageEvents.count) events")
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundColor(DesignSystem.textMuted)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 4)
+                    .background(DesignSystem.surface)
+                    .cornerRadius(12)
+            }
+            .padding(.horizontal, 24)
+
+            // Events table
             VStack(spacing: 0) {
                 // Header
-                            HStack {
-                                Text("Date").frame(width: 100, alignment: .leading)
-                                Text("Model").frame(maxWidth: .infinity, alignment: .leading)
-                                Text("In").frame(width: 50, alignment: .trailing)
-                                if !(provider is BLTProvider) {
-                                    Text("Out").frame(width: 50, alignment: .trailing)
-                                    Text("Cache").frame(width: 50, alignment: .trailing)
-                                }
-                                Text("Total").frame(width: 60, alignment: .trailing)
-                                Text("Cost").frame(width: 80, alignment: .trailing)
-                                if !(provider is BLTProvider) {
-                                    Text("$/1M").frame(width: 60, alignment: .trailing)
-                                }
-                            }
-                            .font(.system(size: 12, weight: .bold))
-                            .foregroundColor(.secondary)
-                            .padding(.vertical, 8)
-                            .padding(.horizontal)
-                            .background(Color.white.opacity(0.05))
+                HStack {
+                    Text("Date").frame(width: 90, alignment: .leading)
+                    Text("Model").frame(maxWidth: .infinity, alignment: .leading)
+                    Text("In").frame(width: 50, alignment: .trailing)
+                    if !(provider is BLTProvider) {
+                        Text("Out").frame(width: 50, alignment: .trailing)
+                        Text("Cache").frame(width: 50, alignment: .trailing)
+                    }
+                    Text("Total").frame(width: 60, alignment: .trailing)
+                    Text("Cost").frame(width: 70, alignment: .trailing)
+                    if !(provider is BLTProvider) {
+                        Text("$/1M").frame(width: 50, alignment: .trailing)
+                    }
+                }
+                .font(.system(size: 11, weight: .bold))
+                .foregroundColor(DesignSystem.textMuted)
+                .padding(.vertical, 12)
+                .padding(.horizontal, 16)
+                .background(DesignSystem.surfaceHover)
 
-                            ForEach(provider.usageEvents) { event in
-                                Divider()
-                                HStack {
-                                    Text(event.date).frame(width: 100, alignment: .leading)
-                                    Text(event.model).frame(maxWidth: .infinity, alignment: .leading)
-                                    Text(event.inputTokensFormatted).frame(width: 50, alignment: .trailing)
-                                    if !(provider is BLTProvider) {
-                                        Text(event.outputTokensFormatted).frame(width: 50, alignment: .trailing)
-                                        Text(event.cacheTokensFormatted).frame(width: 50, alignment: .trailing)
-                                    }
-                                    Text(event.totalTokensFormatted).frame(width: 60, alignment: .trailing)
-                                    Text(event.costFormatted).frame(width: 80, alignment: .trailing)
-                                    if !(provider is BLTProvider) {
-                                        Text(event.pricePerMillion).frame(width: 60, alignment: .trailing)
-                                    }
-                                }
-                                .font(.system(size: 11))
-                                .padding(.vertical, 8)
-                                .padding(.horizontal)
-                            }
+                ForEach(Array(provider.usageEvents.enumerated()), id: \.element.id) { index, event in
+                    if index > 0 {
+                        Divider()
+                            .background(DesignSystem.surfaceHover)
+                    }
+
+                    HStack {
+                        Text(event.date).frame(width: 90, alignment: .leading)
+                        Text(event.model)
+                            .lineLimit(1)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                        Text(event.inputTokensFormatted).frame(width: 50, alignment: .trailing)
+                            .foregroundColor(DesignSystem.textSecondary)
+                        if !(provider is BLTProvider) {
+                            Text(event.outputTokensFormatted).frame(width: 50, alignment: .trailing)
+                                .foregroundColor(DesignSystem.textSecondary)
+                            Text(event.cacheTokensFormatted).frame(width: 50, alignment: .trailing)
+                                .foregroundColor(DesignSystem.textMuted)
+                        }
+                        Text(event.totalTokensFormatted).frame(width: 60, alignment: .trailing)
+                            .font(.system(size: 11, weight: .semibold))
+                        Text(event.costFormatted).frame(width: 70, alignment: .trailing)
+                            .foregroundColor(DesignSystem.primary)
+                        if !(provider is BLTProvider) {
+                            Text(event.pricePerMillion).frame(width: 50, alignment: .trailing)
+                                .foregroundColor(DesignSystem.textMuted)
+                        }
+                    }
+                    .font(.system(size: 11))
+                    .padding(.vertical, 10)
+                    .padding(.horizontal, 16)
+                    .background(index % 2 == 0 ? Color.clear : DesignSystem.surface.opacity(0.3))
+                }
             }
-            .background(Color.white.opacity(0.03))
-            .cornerRadius(8)
-            .padding(.horizontal)
+            .background(DesignSystem.backgroundElevated)
+            .cornerRadius(12)
+            .overlay(
+                RoundedRectangle(cornerRadius: 12)
+                    .stroke(DesignSystem.surfaceHover, lineWidth: 1)
+            )
+            .padding(.horizontal, 24)
         }
     }
 
     private var statisticsGridSection: some View {
         LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 16) {
-            StatCard(title: "Status", value: provider.isLoading ? "Loading..." : "Active", icon: "bolt.fill")
-            StatCard(title: "Balance", value: "$\(provider.balanceString)", icon: "dollarsign.circle")
-            StatCard(title: "Provider", value: provider.name, icon: "cpu")
-            StatCard(title: "Last Sync", value: "Just now", icon: "clock")
+            StatCard(title: "Status", value: provider.isLoading ? "Loading..." : "Active", icon: "bolt.fill", iconColor: DesignSystem.warning)
+            StatCard(title: "Balance", value: "$\(provider.balanceString)", icon: "dollarsign.circle", iconColor: DesignSystem.success)
+            StatCard(title: "Provider", value: provider.name, icon: "cpu", iconColor: DesignSystem.primary)
+            StatCard(title: "Last Sync", value: "Just now", icon: "clock", iconColor: DesignSystem.textMuted)
         }
-        .padding()
+        .padding(.horizontal, 24)
     }
 }
 
@@ -316,25 +454,46 @@ struct StatCard: View {
     let title: String
     let value: String
     let icon: String
+    let iconColor: Color
+    @State private var isHovered = false
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 14) {
             HStack {
                 Image(systemName: icon)
-                    .foregroundColor(.blue)
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(iconColor)
+
                 Text(title)
-                    .font(.system(size: 14))
-                    .foregroundColor(.gray)
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundColor(DesignSystem.textMuted)
+
+                Spacer()
             }
 
             Text(value)
-                .font(.system(size: 24, weight: .bold))
-                .foregroundColor(.white)
+                .font(DesignSystem.displayFont(size: 22, weight: .bold))
+                .foregroundColor(DesignSystem.textPrimary)
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding()
-        .background(Color.white.opacity(0.05))
-        .cornerRadius(12)
+        .padding(18)
+        .background(
+            RoundedRectangle(cornerRadius: 14)
+                .fill(isHovered ? DesignSystem.surfaceHover : DesignSystem.surface)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 14)
+                .stroke(DesignSystem.surfaceHover, lineWidth: 1)
+        )
+        .shadow(color: Color.black.opacity(0.1), radius: 4, x: 0, y: 2)
+        .scaleEffect(isHovered ? 1.02 : 1.0)
+        .onHover { hovering in
+            withAnimation(.easeOut(duration: 0.2)) {
+                isHovered = hovering
+            }
+        }
     }
 }
 
@@ -344,41 +503,87 @@ struct UsageCard: View {
     let limit: String
     let progress: Double
     var isUnlimited: Bool = false
+    let accentColor: Color
+    @State private var animatedProgress: Double = 0
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text(title)
-                .font(.system(size: 12))
-                .foregroundColor(.secondary)
+        VStack(alignment: .leading, spacing: 14) {
+            // Title with accent indicator
+            HStack(spacing: 8) {
+                Circle()
+                    .fill(accentColor)
+                    .frame(width: 6, height: 6)
 
-            HStack(alignment: .bottom, spacing: 4) {
-                Text(value)
-                    .font(.system(size: 24, weight: .bold))
-                Text("/ \(limit)")
-                    .font(.system(size: 16))
-                    .foregroundColor(.secondary)
-                    .padding(.bottom, 2)
+                Text(title)
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundColor(DesignSystem.textSecondary)
             }
 
+            // Value display
+            HStack(alignment: .bottom, spacing: 6) {
+                Text(value)
+                    .font(DesignSystem.displayFont(size: 28, weight: .bold))
+                    .foregroundColor(DesignSystem.textPrimary)
+
+                Text("/ \(limit)")
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundColor(DesignSystem.textMuted)
+                    .padding(.bottom, 4)
+            }
+
+            // Progress bar
             if !isUnlimited {
                 GeometryReader { geo in
                     ZStack(alignment: .leading) {
-                        RoundedRectangle(cornerRadius: 2)
-                            .fill(Color.white.opacity(0.1))
-                        RoundedRectangle(cornerRadius: 2)
-                            .fill(Color.blue)
-                            .frame(width: geo.size.width * CGFloat(min(progress, 1.0)))
+                        // Track
+                        RoundedRectangle(cornerRadius: 4)
+                            .fill(DesignSystem.surfaceHover)
+
+                        // Progress
+                        RoundedRectangle(cornerRadius: 4)
+                            .fill(
+                                LinearGradient(
+                                    colors: [accentColor, accentColor.opacity(0.7)],
+                                    startPoint: .leading,
+                                    endPoint: .trailing
+                                )
+                            )
+                            .frame(width: geo.size.width * CGFloat(min(animatedProgress, 1.0)))
+                            .shadow(color: accentColor.opacity(0.3), radius: 4, x: 0, y: 2)
                     }
                 }
-                .frame(height: 4)
+                .frame(height: 8)
             } else {
-                Divider()
-                    .background(Color.white.opacity(0.1))
+                // Divider for unlimited
+                HStack(spacing: 4) {
+                    Rectangle()
+                        .fill(DesignSystem.surfaceHover)
+                        .frame(height: 1)
+
+                    Text("UNLIMITED")
+                        .font(.system(size: 9, weight: .bold))
+                        .foregroundColor(DesignSystem.textMuted)
+
+                    Rectangle()
+                        .fill(DesignSystem.surfaceHover)
+                        .frame(height: 1)
+                }
             }
         }
-        .padding()
-        .background(Color.white.opacity(0.05))
-        .cornerRadius(12)
+        .padding(18)
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(DesignSystem.surface)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(DesignSystem.surfaceHover, lineWidth: 1)
+        )
+        .onAppear {
+            withAnimation(.easeOut(duration: 0.8).delay(0.2)) {
+                animatedProgress = progress
+            }
+        }
     }
 }
 
@@ -386,40 +591,71 @@ struct UsageCard: View {
 
 struct ZenMuxDetailView: View {
     @ObservedObject var provider: ZenMuxProvider
+    @State private var contentOpacity: Double = 0
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: 24) {
+        ScrollView(.vertical, showsIndicators: true) {
+            VStack(spacing: 32) {
                 headerSection
 
                 if let error = provider.errorMessage {
-                    Text(error)
-                        .foregroundColor(.red)
-                        .font(.caption)
-                        .padding(.horizontal)
+                    HStack(spacing: 12) {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .foregroundColor(DesignSystem.error)
+                        Text(error)
+                            .font(.system(size: 13, weight: .medium))
+                            .foregroundColor(DesignSystem.error.opacity(0.9))
+                    }
+                    .padding(16)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(DesignSystem.error.opacity(0.1))
+                    .cornerRadius(12)
+                    .overlay(RoundedRectangle(cornerRadius: 12).stroke(DesignSystem.error.opacity(0.3), lineWidth: 1))
+                    .padding(.horizontal)
                 }
 
-                Divider()
-                    .padding(.horizontal)
+                accentDivider
 
                 usageOverviewSection
 
                 walletSection
 
-                Spacer()
+                Spacer(minLength: 40)
+            }
+            .frame(maxWidth: .infinity)
+        }
+        .onAppear {
+            withAnimation(.easeOut(duration: 0.5)) {
+                contentOpacity = 1
             }
         }
-        .background(Color(red: 0.05, green: 0.05, blue: 0.05))
+    }
+
+    private var accentDivider: some View {
+        HStack(spacing: 8) {
+            Rectangle()
+                .fill(DesignSystem.primary)
+                .frame(width: 40, height: 3)
+                .cornerRadius(1.5)
+            Rectangle()
+                .fill(DesignSystem.primary.opacity(0.5))
+                .frame(height: 1)
+            Rectangle()
+                .fill(DesignSystem.primary.opacity(0.2))
+                .frame(height: 1)
+        }
+        .padding(.horizontal, 24)
     }
 
     private var headerSection: some View {
-        HStack(alignment: .bottom) {
-            VStack(alignment: .leading, spacing: 4) {
+        HStack(alignment: .bottom, spacing: 0) {
+            VStack(alignment: .leading, spacing: 6) {
                 Text(provider.fullName)
-                    .font(.system(size: 28, weight: .bold))
+                    .font(DesignSystem.displayFont(size: 32, weight: .bold))
+                    .foregroundColor(DesignSystem.textPrimary)
                 Text(provider.symbol)
-                    .font(.system(size: 18))
-                    .foregroundColor(.gray)
+                    .font(.system(size: 16, weight: .medium))
+                    .foregroundColor(DesignSystem.textMuted)
             }
 
             Spacer()
@@ -434,20 +670,31 @@ struct ZenMuxDetailView: View {
                     }
                 }) {
                     Image(systemName: "arrow.clockwise")
-                        .font(.system(size: 16))
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundColor(DesignSystem.textMuted)
+                        .frame(width: 36, height: 36)
+                        .background(DesignSystem.surface)
+                        .clipShape(Circle())
                 }
                 .buttonStyle(.plain)
             }
         }
-        .padding()
+        .padding(.horizontal, 24)
+        .padding(.top, 28)
     }
 
     private var usageOverviewSection: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text("Today's Usage")
-                .font(.system(size: 16, weight: .semibold))
-                .foregroundColor(.gray)
-                .padding(.horizontal)
+        VStack(alignment: .leading, spacing: 20) {
+            HStack {
+                Text("Today's Usage")
+                    .font(DesignSystem.displayFont(size: 20, weight: .bold))
+                    .foregroundColor(DesignSystem.textPrimary)
+                Spacer()
+                Circle()
+                    .fill(DesignSystem.primary)
+                    .frame(width: 8, height: 8)
+            }
+            .padding(.horizontal, 24)
 
             HStack(spacing: 16) {
                 UsageCard(
@@ -455,54 +702,62 @@ struct ZenMuxDetailView: View {
                     value: "$\(String(format: "%.6f", provider.todayUsage))",
                     limit: "Today",
                     progress: 0,
-                    isUnlimited: true
+                    isUnlimited: true,
+                    accentColor: DesignSystem.primary
                 )
 
-                VStack(alignment: .leading, spacing: 8) {
+                VStack(alignment: .leading, spacing: 12) {
                     HStack {
                         Text("Input")
-                            .font(.system(size: 12))
-                            .foregroundColor(.secondary)
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundColor(DesignSystem.textMuted)
                         Spacer()
                         Text("$\(String(format: "%.6f", provider.todayInputCost))")
-                            .font(.system(size: 14, weight: .medium))
-                            .foregroundColor(.white)
+                            .font(DesignSystem.displayFont(size: 14, weight: .semibold))
+                            .foregroundColor(DesignSystem.textPrimary)
                     }
 
                     HStack {
                         Text("Output")
-                            .font(.system(size: 12))
-                            .foregroundColor(.secondary)
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundColor(DesignSystem.textMuted)
                         Spacer()
                         Text("$\(String(format: "%.6f", provider.todayOutputCost))")
-                            .font(.system(size: 14, weight: .medium))
-                            .foregroundColor(.white)
+                            .font(DesignSystem.displayFont(size: 14, weight: .semibold))
+                            .foregroundColor(DesignSystem.textPrimary)
                     }
 
                     HStack {
                         Text("Requests")
-                            .font(.system(size: 12))
-                            .foregroundColor(.secondary)
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundColor(DesignSystem.textMuted)
                         Spacer()
                         Text("\(provider.todayRequestCount)")
-                            .font(.system(size: 14, weight: .medium))
-                            .foregroundColor(.white)
+                            .font(DesignSystem.displayFont(size: 14, weight: .semibold))
+                            .foregroundColor(DesignSystem.primary)
                     }
                 }
-                .padding()
-                .background(Color.white.opacity(0.05))
-                .cornerRadius(12)
+                .padding(18)
+                .background(DesignSystem.surface)
+                .cornerRadius(16)
+                .overlay(RoundedRectangle(cornerRadius: 16).stroke(DesignSystem.surfaceHover, lineWidth: 1))
             }
-            .padding(.horizontal)
+            .padding(.horizontal, 24)
         }
     }
 
     private var walletSection: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text("Wallet Balance")
-                .font(.system(size: 16, weight: .semibold))
-                .foregroundColor(.gray)
-                .padding(.horizontal)
+        VStack(alignment: .leading, spacing: 20) {
+            HStack {
+                Text("Wallet Balance")
+                    .font(DesignSystem.displayFont(size: 20, weight: .bold))
+                    .foregroundColor(DesignSystem.textPrimary)
+                Spacer()
+                Circle()
+                    .fill(DesignSystem.success)
+                    .frame(width: 8, height: 8)
+            }
+            .padding(.horizontal, 24)
 
             HStack(spacing: 16) {
                 UsageCard(
@@ -510,47 +765,50 @@ struct ZenMuxDetailView: View {
                     value: "$\(String(format: "%.2f", provider.balance))",
                     limit: "Available",
                     progress: 0,
-                    isUnlimited: true
+                    isUnlimited: true,
+                    accentColor: DesignSystem.success
                 )
 
-                VStack(alignment: .leading, spacing: 8) {
+                VStack(alignment: .leading, spacing: 12) {
                     HStack {
                         Text("Charge")
-                            .font(.system(size: 12))
-                            .foregroundColor(.secondary)
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundColor(DesignSystem.textMuted)
                         Spacer()
                         Text("$\(String(format: "%.2f", provider.chargeBalance))")
-                            .font(.system(size: 14, weight: .medium))
-                            .foregroundColor(.green)
+                            .font(DesignSystem.displayFont(size: 14, weight: .semibold))
+                            .foregroundColor(DesignSystem.success)
                     }
 
                     HStack {
                         Text("Discount")
-                            .font(.system(size: 12))
-                            .foregroundColor(.secondary)
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundColor(DesignSystem.textMuted)
                         Spacer()
                         Text("$\(String(format: "%.2f", provider.discountBalance))")
-                            .font(.system(size: 14, weight: .medium))
-                            .foregroundColor(.orange)
+                            .font(DesignSystem.displayFont(size: 14, weight: .semibold))
+                            .foregroundColor(DesignSystem.warning)
                     }
 
                     Divider()
+                        .background(DesignSystem.surfaceHover)
 
                     HStack {
                         Text("Owe")
-                            .font(.system(size: 12))
-                            .foregroundColor(.secondary)
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundColor(DesignSystem.textMuted)
                         Spacer()
                         Text("$\(String(format: "%.2f", provider.oweFeeSum))")
-                            .font(.system(size: 14, weight: .medium))
-                            .foregroundColor(provider.oweFeeSum > 0 ? .red : .white)
+                            .font(DesignSystem.displayFont(size: 14, weight: .semibold))
+                            .foregroundColor(provider.oweFeeSum > 0 ? DesignSystem.error : DesignSystem.textPrimary)
                     }
                 }
-                .padding()
-                .background(Color.white.opacity(0.05))
-                .cornerRadius(12)
+                .padding(18)
+                .background(DesignSystem.surface)
+                .cornerRadius(16)
+                .overlay(RoundedRectangle(cornerRadius: 16).stroke(DesignSystem.surfaceHover, lineWidth: 1))
             }
-            .padding(.horizontal)
+            .padding(.horizontal, 24)
         }
     }
 }
@@ -559,21 +817,30 @@ struct ZenMuxDetailView: View {
 
 struct MiniMaxDetailView: View {
     @ObservedObject var provider: MiniMaxProvider
+    @State private var contentOpacity: Double = 0
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: 24) {
+        ScrollView(.vertical, showsIndicators: true) {
+            VStack(spacing: 32) {
                 headerSection
 
                 if let error = provider.errorMessage {
-                    Text(error)
-                        .foregroundColor(.red)
-                        .font(.caption)
-                        .padding(.horizontal)
+                    HStack(spacing: 12) {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .foregroundColor(DesignSystem.error)
+                        Text(error)
+                            .font(.system(size: 13, weight: .medium))
+                            .foregroundColor(DesignSystem.error.opacity(0.9))
+                    }
+                    .padding(16)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(DesignSystem.error.opacity(0.1))
+                    .cornerRadius(12)
+                    .overlay(RoundedRectangle(cornerRadius: 12).stroke(DesignSystem.error.opacity(0.3), lineWidth: 1))
+                    .padding(.horizontal)
                 }
 
-                Divider()
-                    .padding(.horizontal)
+                accentDivider
 
                 subscriptionSection
 
@@ -581,20 +848,42 @@ struct MiniMaxDetailView: View {
 
                 modelListSection
 
-                Spacer()
+                Spacer(minLength: 40)
+            }
+            .frame(maxWidth: .infinity)
+        }
+        .onAppear {
+            withAnimation(.easeOut(duration: 0.5)) {
+                contentOpacity = 1
             }
         }
-        .background(Color(red: 0.05, green: 0.05, blue: 0.05))
+    }
+
+    private var accentDivider: some View {
+        HStack(spacing: 8) {
+            Rectangle()
+                .fill(DesignSystem.primary)
+                .frame(width: 40, height: 3)
+                .cornerRadius(1.5)
+            Rectangle()
+                .fill(DesignSystem.primary.opacity(0.5))
+                .frame(height: 1)
+            Rectangle()
+                .fill(DesignSystem.primary.opacity(0.2))
+                .frame(height: 1)
+        }
+        .padding(.horizontal, 24)
     }
 
     private var headerSection: some View {
-        HStack(alignment: .bottom) {
-            VStack(alignment: .leading, spacing: 4) {
+        HStack(alignment: .bottom, spacing: 0) {
+            VStack(alignment: .leading, spacing: 6) {
                 Text(provider.fullName)
-                    .font(.system(size: 28, weight: .bold))
+                    .font(DesignSystem.displayFont(size: 32, weight: .bold))
+                    .foregroundColor(DesignSystem.textPrimary)
                 Text(provider.symbol)
-                    .font(.system(size: 18))
-                    .foregroundColor(.gray)
+                    .font(.system(size: 16, weight: .medium))
+                    .foregroundColor(DesignSystem.textMuted)
             }
 
             Spacer()
@@ -609,129 +898,158 @@ struct MiniMaxDetailView: View {
                     }
                 }) {
                     Image(systemName: "arrow.clockwise")
-                        .font(.system(size: 16))
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundColor(DesignSystem.textMuted)
+                        .frame(width: 36, height: 36)
+                        .background(DesignSystem.surface)
+                        .clipShape(Circle())
                 }
                 .buttonStyle(.plain)
             }
         }
-        .padding()
+        .padding(.horizontal, 24)
+        .padding(.top, 28)
     }
 
     private var subscriptionSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Subscription")
-                .font(.system(size: 16, weight: .semibold))
-                .foregroundColor(.gray)
-                .padding(.horizontal)
+        VStack(alignment: .leading, spacing: 20) {
+            HStack {
+                Text("Subscription")
+                    .font(DesignSystem.displayFont(size: 20, weight: .bold))
+                    .foregroundColor(DesignSystem.textPrimary)
+                Spacer()
+                Circle()
+                    .fill(DesignSystem.primary)
+                    .frame(width: 8, height: 8)
+            }
+            .padding(.horizontal, 24)
 
             HStack(spacing: 16) {
-                VStack(alignment: .leading, spacing: 4) {
+                VStack(alignment: .leading, spacing: 6) {
                     Text("Current Plan")
-                        .font(.system(size: 12))
-                        .foregroundColor(.secondary)
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundColor(DesignSystem.textMuted)
                     Text(provider.currentSubscriptionTitle.isEmpty ? "--" : provider.currentSubscriptionTitle)
-                        .font(.system(size: 14, weight: .medium))
-                        .foregroundColor(.white)
+                        .font(DesignSystem.displayFont(size: 14, weight: .semibold))
+                        .foregroundColor(DesignSystem.textPrimary)
                 }
 
                 Spacer()
 
                 if let combo = provider.currentComboCard {
-                    VStack(alignment: .trailing, spacing: 4) {
+                    VStack(alignment: .trailing, spacing: 6) {
                         Text("Price")
-                            .font(.system(size: 12))
-                            .foregroundColor(.secondary)
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundColor(DesignSystem.textMuted)
                         Text(combo.priceString)
-                            .font(.system(size: 14, weight: .medium))
-                            .foregroundColor(.green)
+                            .font(DesignSystem.displayFont(size: 14, weight: .semibold))
+                            .foregroundColor(DesignSystem.success)
                     }
 
                     Spacer()
 
-                    VStack(alignment: .trailing, spacing: 4) {
+                    VStack(alignment: .trailing, spacing: 6) {
                         Text("Cycle")
-                            .font(.system(size: 12))
-                            .foregroundColor(.secondary)
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundColor(DesignSystem.textMuted)
                         Text(combo.cycleString)
-                            .font(.system(size: 14, weight: .medium))
-                            .foregroundColor(.white)
+                            .font(DesignSystem.displayFont(size: 14, weight: .semibold))
+                            .foregroundColor(DesignSystem.textPrimary)
                     }
                 }
 
-                VStack(alignment: .trailing, spacing: 4) {
+                VStack(alignment: .trailing, spacing: 6) {
                     Text("Expires")
-                        .font(.system(size: 12))
-                        .foregroundColor(.secondary)
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundColor(DesignSystem.textMuted)
                     Text(provider.currentSubscriptionEndDate.isEmpty ? "--" : provider.currentSubscriptionEndDate)
-                        .font(.system(size: 14, weight: .medium))
-                        .foregroundColor(.orange)
+                        .font(DesignSystem.displayFont(size: 14, weight: .semibold))
+                        .foregroundColor(DesignSystem.warning)
                 }
             }
-            .padding()
-            .background(Color.white.opacity(0.05))
-            .cornerRadius(12)
-            .padding(.horizontal)
+            .padding(18)
+            .background(DesignSystem.surface)
+            .cornerRadius(16)
+            .overlay(RoundedRectangle(cornerRadius: 16).stroke(DesignSystem.surfaceHover, lineWidth: 1))
+            .padding(.horizontal, 24)
         }
     }
 
     private var timeWindowSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Current Period")
-                .font(.system(size: 16, weight: .semibold))
-                .foregroundColor(.gray)
-                .padding(.horizontal)
+        VStack(alignment: .leading, spacing: 20) {
+            HStack {
+                Text("Current Period")
+                    .font(DesignSystem.displayFont(size: 20, weight: .bold))
+                    .foregroundColor(DesignSystem.textPrimary)
+                Spacer()
+                Circle()
+                    .fill(DesignSystem.warning)
+                    .frame(width: 8, height: 8)
+            }
+            .padding(.horizontal, 24)
 
             HStack(spacing: 16) {
-                VStack(alignment: .leading, spacing: 4) {
+                VStack(alignment: .leading, spacing: 6) {
                     Text("Time Window")
-                        .font(.system(size: 12))
-                        .foregroundColor(.secondary)
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundColor(DesignSystem.textMuted)
                     if let start = provider.currentPeriodStart, let end = provider.currentPeriodEnd {
                         Text(formatDateRange(start: start, end: end))
-                            .font(.system(size: 14, weight: .medium))
-                            .foregroundColor(.white)
+                            .font(DesignSystem.displayFont(size: 14, weight: .semibold))
+                            .foregroundColor(DesignSystem.textPrimary)
                     } else {
                         Text("--")
-                            .font(.system(size: 14))
-                            .foregroundColor(.secondary)
+                            .font(DesignSystem.displayFont(size: 14, weight: .medium))
+                            .foregroundColor(DesignSystem.textMuted)
                     }
                 }
 
                 Spacer()
 
-                VStack(alignment: .trailing, spacing: 4) {
+                VStack(alignment: .trailing, spacing: 6) {
                     Text("Next Refresh")
-                        .font(.system(size: 12))
-                        .foregroundColor(.secondary)
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundColor(DesignSystem.textMuted)
                     if let end = provider.currentPeriodEnd {
                         Text(formatDate(end))
-                            .font(.system(size: 14, weight: .medium))
-                            .foregroundColor(.orange)
+                            .font(DesignSystem.displayFont(size: 14, weight: .semibold))
+                            .foregroundColor(DesignSystem.warning)
                     } else {
                         Text("--")
-                            .font(.system(size: 14))
-                            .foregroundColor(.secondary)
+                            .font(DesignSystem.displayFont(size: 14, weight: .medium))
+                            .foregroundColor(DesignSystem.textMuted)
                     }
                 }
             }
-            .padding()
-            .background(Color.white.opacity(0.05))
-            .cornerRadius(12)
-            .padding(.horizontal)
+            .padding(18)
+            .background(DesignSystem.surface)
+            .cornerRadius(16)
+            .overlay(RoundedRectangle(cornerRadius: 16).stroke(DesignSystem.surfaceHover, lineWidth: 1))
+            .padding(.horizontal, 24)
         }
     }
 
     private var modelListSection: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text("Models")
-                .font(.system(size: 16, weight: .semibold))
-                .foregroundColor(.gray)
-                .padding(.horizontal)
+        VStack(alignment: .leading, spacing: 20) {
+            HStack {
+                Text("Models")
+                    .font(DesignSystem.displayFont(size: 20, weight: .bold))
+                    .foregroundColor(DesignSystem.textPrimary)
+                Spacer()
+                Text("\(provider.modelRemains.count)")
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundColor(DesignSystem.textMuted)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 4)
+                    .background(DesignSystem.surface)
+                    .cornerRadius(12)
+            }
+            .padding(.horizontal, 24)
 
             ForEach(provider.modelRemains) { model in
                 ModelRemainCard(model: model)
             }
-            .padding(.horizontal)
+            .padding(.horizontal, 24)
         }
     }
 
@@ -752,11 +1070,11 @@ struct ModelRemainCard: View {
     let model: ModelRemain
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 14) {
             HStack {
                 Text(model.modelName)
-                    .font(.system(size: 16, weight: .bold))
-                    .foregroundColor(.white)
+                    .font(DesignSystem.displayFont(size: 16, weight: .bold))
+                    .foregroundColor(DesignSystem.textPrimary)
 
                 Spacer()
 
@@ -765,64 +1083,66 @@ struct ModelRemainCard: View {
                     .foregroundColor(remainingColor)
             }
 
-            GeometryReader { geometry in
+            GeometryReader { geo in
                 ZStack(alignment: .leading) {
                     RoundedRectangle(cornerRadius: 6)
-                        .fill(Color.white.opacity(0.1))
+                        .fill(DesignSystem.surfaceHover)
                         .frame(height: 12)
 
                     RoundedRectangle(cornerRadius: 6)
                         .fill(remainingColor)
-                        .frame(width: geometry.size.width * CGFloat(model.remainingPercent / 100), height: 12)
+                        .frame(width: geo.size.width * CGFloat(model.remainingPercent / 100), height: 12)
+                        .shadow(color: remainingColor.opacity(0.3), radius: 4, x: 0, y: 2)
                 }
             }
             .frame(height: 12)
 
             HStack {
-                VStack(alignment: .leading, spacing: 2) {
+                VStack(alignment: .leading, spacing: 4) {
                     Text("Used")
-                        .font(.system(size: 11))
-                        .foregroundColor(.secondary)
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundColor(DesignSystem.textMuted)
                     Text("\(model.usedCount)")
-                        .font(.system(size: 14, weight: .semibold))
-                        .foregroundColor(.red)
+                        .font(DesignSystem.displayFont(size: 14, weight: .semibold))
+                        .foregroundColor(DesignSystem.error)
                 }
 
                 Spacer()
 
-                VStack(alignment: .center, spacing: 2) {
+                VStack(alignment: .center, spacing: 4) {
                     Text("Total")
-                        .font(.system(size: 11))
-                        .foregroundColor(.secondary)
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundColor(DesignSystem.textMuted)
                     Text("\(model.currentIntervalTotalCount)")
-                        .font(.system(size: 14, weight: .semibold))
-                        .foregroundColor(.white)
+                        .font(DesignSystem.displayFont(size: 14, weight: .semibold))
+                        .foregroundColor(DesignSystem.textPrimary)
                 }
 
                 Spacer()
 
-                VStack(alignment: .trailing, spacing: 2) {
+                VStack(alignment: .trailing, spacing: 4) {
                     Text("Remaining")
-                        .font(.system(size: 11))
-                        .foregroundColor(.secondary)
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundColor(DesignSystem.textMuted)
                     Text("\(model.remainingCount)")
-                        .font(.system(size: 14, weight: .semibold))
-                        .foregroundColor(.green)
+                        .font(DesignSystem.displayFont(size: 14, weight: .semibold))
+                        .foregroundColor(DesignSystem.success)
                 }
             }
         }
-        .padding()
-        .background(Color.white.opacity(0.05))
-        .cornerRadius(12)
+        .padding(18)
+        .background(DesignSystem.surface)
+        .cornerRadius(16)
+        .overlay(RoundedRectangle(cornerRadius: 16).stroke(DesignSystem.surfaceHover, lineWidth: 1))
     }
 
     private var remainingColor: Color {
         if model.remainingPercent > 50 {
-            return .green
+            return DesignSystem.success
         } else if model.remainingPercent > 20 {
-            return .orange
+            return DesignSystem.warning
         } else {
-            return .red
+            return DesignSystem.error
         }
     }
 }
