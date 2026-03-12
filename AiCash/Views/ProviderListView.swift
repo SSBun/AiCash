@@ -19,20 +19,29 @@ struct ProviderRow<Provider: AIProviderProtocol>: View {
             
             SparklineView(
                 data: provider.usageHistory.map { $0.amount },
-                color: .red
+                color: Color(red: 0.96, green: 0.61, blue: 0.04)
             )
             .frame(width: 60, height: 32)
-            
+
             VStack(alignment: .trailing, spacing: 2) {
                 Text(provider.balanceString)
                     .font(.system(size: 16, weight: .semibold))
                     .foregroundColor(.white)
-                
+
                 Text(provider.todayUsageString)
                     .font(.system(size: 12, weight: .bold))
                     .frame(width: 64)
                     .padding(.vertical, 2)
-                    .background(Color.red)
+                    .background(
+                        LinearGradient(
+                            colors: [
+                                Color(red: 0.96, green: 0.61, blue: 0.04),
+                                Color(red: 0.98, green: 0.45, blue: 0.09)
+                            ],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                    )
                     .cornerRadius(4)
                     .foregroundColor(.white)
             }
@@ -121,11 +130,11 @@ struct MiniMaxRow: View {
     private var remainingColor: Color {
         let percent = provider.modelRemains.first?.remainingPercent ?? 0
         if percent > 50 {
-            return .green
+            return Color(red: 0.06, green: 0.73, blue: 0.51) // Emerald green
         } else if percent > 20 {
-            return .orange
+            return Color(red: 0.96, green: 0.61, blue: 0.04) // Amber
         } else {
-            return .red
+            return Color(red: 0.96, green: 0.25, blue: 0.37) // Rose red
         }
     }
 }

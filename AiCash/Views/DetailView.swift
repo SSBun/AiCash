@@ -67,7 +67,7 @@ struct DetailView<Provider: AIProviderProtocol>: View {
                     Text(provider.todayUsageString)
                 }
                 .font(.system(size: 16, weight: .semibold))
-                .foregroundColor(.red)
+                .foregroundColor(Color(red: 0.96, green: 0.61, blue: 0.04)) // Amber
             }
 
             Button(action: {
@@ -174,12 +174,21 @@ struct DetailView<Provider: AIProviderProtocol>: View {
                     y: .value("Cost", item.amount),
                     width: .fixed(40)
                 )
-                .foregroundStyle(Color.red.opacity(0.8))
+                .foregroundStyle(
+                    LinearGradient(
+                        colors: [
+                            Color(red: 0.96, green: 0.61, blue: 0.04), // Amber
+                            Color(red: 0.98, green: 0.45, blue: 0.09)  // Orange
+                        ],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                )
                 .cornerRadius(4)
                 .annotation(position: .top) {
                     Text("$\(String(format: "%.2f", item.amount))")
                         .font(.system(size: 10, weight: .medium))
-                        .foregroundColor(.white)
+                        .foregroundColor(Color(red: 0.96, green: 0.61, blue: 0.04))
                 }
             }
             .chartYAxis {
@@ -206,7 +215,16 @@ struct DetailView<Provider: AIProviderProtocol>: View {
                     x: .value("Time", usage.date),
                     y: .value("Usage", usage.amount)
                 )
-                .foregroundStyle(Color.red)
+                .foregroundStyle(
+                    LinearGradient(
+                        colors: [
+                            Color(red: 0.96, green: 0.61, blue: 0.04),
+                            Color(red: 0.98, green: 0.45, blue: 0.09)
+                        ],
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
+                )
 
                 AreaMark(
                     x: .value("Time", usage.date),
@@ -215,8 +233,8 @@ struct DetailView<Provider: AIProviderProtocol>: View {
                 .foregroundStyle(
                     LinearGradient(
                         colors: [
-                            Color.red.opacity(0.2),
-                            Color.red.opacity(0.0)
+                            Color(red: 0.96, green: 0.61, blue: 0.04).opacity(0.3),
+                            Color(red: 0.96, green: 0.61, blue: 0.04).opacity(0.0)
                         ],
                         startPoint: .top,
                         endPoint: .bottom
@@ -237,21 +255,36 @@ struct DetailView<Provider: AIProviderProtocol>: View {
             VStack(spacing: 0) {
                 // Header
                             HStack {
-                                Text("Date").frame(width: 100, alignment: .leading)
-                                Text("Model").frame(maxWidth: .infinity, alignment: .leading)
-                                Text("In").frame(width: 50, alignment: .trailing)
+                                Text("Date")
+                                    .frame(width: 100, alignment: .leading)
+                                    .foregroundColor(.secondary)
+                                Text("Model")
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .foregroundColor(.secondary)
+                                Text("In")
+                                    .frame(width: 50, alignment: .trailing)
+                                    .foregroundColor(Color(red: 0.56, green: 0.56, blue: 0.90)) // Indigo
                                 if !(provider is BLTProvider) {
-                                    Text("Out").frame(width: 50, alignment: .trailing)
-                                    Text("Cache").frame(width: 50, alignment: .trailing)
+                                    Text("Out")
+                                        .frame(width: 50, alignment: .trailing)
+                                        .foregroundColor(Color(red: 0.77, green: 0.44, blue: 0.87)) // Purple
+                                    Text("Cache")
+                                        .frame(width: 50, alignment: .trailing)
+                                        .foregroundColor(Color(red: 0.20, green: 0.78, blue: 0.79)) // Teal
                                 }
-                                Text("Total").frame(width: 60, alignment: .trailing)
-                                Text("Cost").frame(width: 80, alignment: .trailing)
+                                Text("Total")
+                                    .frame(width: 60, alignment: .trailing)
+                                    .foregroundColor(.secondary)
+                                Text("Cost")
+                                    .frame(width: 80, alignment: .trailing)
+                                    .foregroundColor(Color(red: 0.96, green: 0.61, blue: 0.04)) // Amber
                                 if !(provider is BLTProvider) {
-                                    Text("$/1M").frame(width: 60, alignment: .trailing)
+                                    Text("$/1M")
+                                        .frame(width: 60, alignment: .trailing)
+                                        .foregroundColor(.secondary)
                                 }
                             }
                             .font(.system(size: 12, weight: .bold))
-                            .foregroundColor(.secondary)
                             .padding(.vertical, 8)
                             .padding(.horizontal)
                             .background(Color.white.opacity(0.05))
@@ -259,17 +292,33 @@ struct DetailView<Provider: AIProviderProtocol>: View {
                             ForEach(provider.usageEvents) { event in
                                 Divider()
                                 HStack {
-                                    Text(event.date).frame(width: 100, alignment: .leading)
-                                    Text(event.model).frame(maxWidth: .infinity, alignment: .leading)
-                                    Text(event.inputTokensFormatted).frame(width: 50, alignment: .trailing)
+                                    Text(event.date)
+                                        .frame(width: 100, alignment: .leading)
+                                        .foregroundColor(.secondary)
+                                    Text(event.model)
+                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                        .foregroundColor(.white)
+                                    Text(event.inputTokensFormatted)
+                                        .frame(width: 50, alignment: .trailing)
+                                        .foregroundColor(Color(red: 0.56, green: 0.56, blue: 0.90)) // Indigo
                                     if !(provider is BLTProvider) {
-                                        Text(event.outputTokensFormatted).frame(width: 50, alignment: .trailing)
-                                        Text(event.cacheTokensFormatted).frame(width: 50, alignment: .trailing)
+                                        Text(event.outputTokensFormatted)
+                                            .frame(width: 50, alignment: .trailing)
+                                            .foregroundColor(Color(red: 0.77, green: 0.44, blue: 0.87)) // Purple
+                                        Text(event.cacheTokensFormatted)
+                                            .frame(width: 50, alignment: .trailing)
+                                            .foregroundColor(Color(red: 0.20, green: 0.78, blue: 0.79)) // Teal
                                     }
-                                    Text(event.totalTokensFormatted).frame(width: 60, alignment: .trailing)
-                                    Text(event.costFormatted).frame(width: 80, alignment: .trailing)
+                                    Text(event.totalTokensFormatted)
+                                        .frame(width: 60, alignment: .trailing)
+                                        .foregroundColor(.white)
+                                    Text(event.costFormatted)
+                                        .frame(width: 80, alignment: .trailing)
+                                        .foregroundColor(Color(red: 0.96, green: 0.61, blue: 0.04)) // Amber
                                     if !(provider is BLTProvider) {
-                                        Text(event.pricePerMillion).frame(width: 60, alignment: .trailing)
+                                        Text(event.pricePerMillion)
+                                            .frame(width: 60, alignment: .trailing)
+                                            .foregroundColor(Color(red: 0.56, green: 0.56, blue: 0.58)) // Slate
                                     }
                                 }
                                 .font(.system(size: 11))
@@ -285,10 +334,10 @@ struct DetailView<Provider: AIProviderProtocol>: View {
 
     private var statisticsGridSection: some View {
         LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 16) {
-            StatCard(title: "Status", value: provider.isLoading ? "Loading..." : "Active", icon: "bolt.fill")
-            StatCard(title: "Balance", value: "$\(provider.balanceString)", icon: "dollarsign.circle")
-            StatCard(title: "Provider", value: provider.name, icon: "cpu")
-            StatCard(title: "Last Sync", value: "Just now", icon: "clock")
+            StatCard(title: "Status", value: provider.isLoading ? "Loading..." : "Active", icon: "bolt.fill", iconColor: Color(red: 0.96, green: 0.61, blue: 0.04)) // Amber
+            StatCard(title: "Balance", value: "$\(provider.balanceString)", icon: "dollarsign.circle", iconColor: Color(red: 0.06, green: 0.73, blue: 0.51)) // Emerald
+            StatCard(title: "Provider", value: provider.name, icon: "cpu", iconColor: Color(red: 0.56, green: 0.56, blue: 0.58)) // Slate
+            StatCard(title: "Last Sync", value: "Just now", icon: "clock", iconColor: Color(red: 0.98, green: 0.45, blue: 0.09)) // Orange
         }
         .padding()
     }
@@ -316,12 +365,13 @@ struct StatCard: View {
     let title: String
     let value: String
     let icon: String
+    var iconColor: Color = Color(red: 0.96, green: 0.61, blue: 0.04) // Amber default
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
                 Image(systemName: icon)
-                    .foregroundColor(.blue)
+                    .foregroundColor(iconColor)
                 Text(title)
                     .font(.system(size: 14))
                     .foregroundColor(.gray)
@@ -366,7 +416,16 @@ struct UsageCard: View {
                         RoundedRectangle(cornerRadius: 2)
                             .fill(Color.white.opacity(0.1))
                         RoundedRectangle(cornerRadius: 2)
-                            .fill(Color.blue)
+                            .fill(
+                                LinearGradient(
+                                    colors: [
+                                        Color(red: 0.96, green: 0.61, blue: 0.04),
+                                        Color(red: 0.98, green: 0.45, blue: 0.09)
+                                    ],
+                                    startPoint: .leading,
+                                    endPoint: .trailing
+                                )
+                            )
                             .frame(width: geo.size.width * CGFloat(min(progress, 1.0)))
                     }
                 }
@@ -521,7 +580,7 @@ struct ZenMuxDetailView: View {
                         Spacer()
                         Text("$\(String(format: "%.2f", provider.chargeBalance))")
                             .font(.system(size: 14, weight: .medium))
-                            .foregroundColor(.green)
+                            .foregroundColor(Color(red: 0.06, green: 0.73, blue: 0.51)) // Emerald
                     }
 
                     HStack {
@@ -531,7 +590,7 @@ struct ZenMuxDetailView: View {
                         Spacer()
                         Text("$\(String(format: "%.2f", provider.discountBalance))")
                             .font(.system(size: 14, weight: .medium))
-                            .foregroundColor(.orange)
+                            .foregroundColor(Color(red: 0.96, green: 0.61, blue: 0.04)) // Amber
                     }
 
                     Divider()
@@ -543,7 +602,7 @@ struct ZenMuxDetailView: View {
                         Spacer()
                         Text("$\(String(format: "%.2f", provider.oweFeeSum))")
                             .font(.system(size: 14, weight: .medium))
-                            .foregroundColor(provider.oweFeeSum > 0 ? .red : .white)
+                            .foregroundColor(provider.oweFeeSum > 0 ? Color(red: 0.96, green: 0.25, blue: 0.37) : .white) // Rose
                     }
                 }
                 .padding()
@@ -643,7 +702,7 @@ struct MiniMaxDetailView: View {
                             .foregroundColor(.secondary)
                         Text(combo.priceString)
                             .font(.system(size: 14, weight: .medium))
-                            .foregroundColor(.green)
+                            .foregroundColor(Color(red: 0.06, green: 0.73, blue: 0.51)) // Emerald
                     }
 
                     Spacer()
@@ -664,7 +723,7 @@ struct MiniMaxDetailView: View {
                         .foregroundColor(.secondary)
                     Text(provider.currentSubscriptionEndDate.isEmpty ? "--" : provider.currentSubscriptionEndDate)
                         .font(.system(size: 14, weight: .medium))
-                        .foregroundColor(.orange)
+                        .foregroundColor(Color(red: 0.96, green: 0.61, blue: 0.04)) // Amber
                 }
             }
             .padding()
@@ -706,7 +765,7 @@ struct MiniMaxDetailView: View {
                     if let end = provider.currentPeriodEnd {
                         Text(formatDate(end))
                             .font(.system(size: 14, weight: .medium))
-                            .foregroundColor(.orange)
+                            .foregroundColor(Color(red: 0.96, green: 0.61, blue: 0.04)) // Amber
                     } else {
                         Text("--")
                             .font(.system(size: 14))
@@ -785,7 +844,7 @@ struct ModelRemainCard: View {
                         .foregroundColor(.secondary)
                     Text("\(model.usedCount)")
                         .font(.system(size: 14, weight: .semibold))
-                        .foregroundColor(.red)
+                        .foregroundColor(Color(red: 0.96, green: 0.61, blue: 0.04)) // Amber
                 }
 
                 Spacer()
@@ -807,7 +866,7 @@ struct ModelRemainCard: View {
                         .foregroundColor(.secondary)
                     Text("\(model.remainingCount)")
                         .font(.system(size: 14, weight: .semibold))
-                        .foregroundColor(.green)
+                        .foregroundColor(Color(red: 0.06, green: 0.73, blue: 0.51)) // Emerald
                 }
             }
         }
@@ -818,11 +877,11 @@ struct ModelRemainCard: View {
 
     private var remainingColor: Color {
         if model.remainingPercent > 50 {
-            return .green
+            return Color(red: 0.06, green: 0.73, blue: 0.51) // Emerald
         } else if model.remainingPercent > 20 {
-            return .orange
+            return Color(red: 0.96, green: 0.61, blue: 0.04) // Amber
         } else {
-            return .red
+            return Color(red: 0.96, green: 0.25, blue: 0.37) // Rose
         }
     }
 }

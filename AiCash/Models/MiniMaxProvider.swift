@@ -160,7 +160,7 @@ class MiniMaxProvider: NSObject, AIProviderProtocol, ObservableObject {
         request.addValue("no-cache", forHTTPHeaderField: "Cache-Control")
         request.addValue(cookies, forHTTPHeaderField: "Cookie")
         request.addValue("https://platform.minimaxi.com/", forHTTPHeaderField: "Referer")
-        request.addValue("platform.minimaxi.com", forHTTPHeaderField: "Origin")
+        request.addValue("https://www.minimaxi.com", forHTTPHeaderField: "Origin")
         request.addValue("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36", forHTTPHeaderField: "User-Agent")
 
         let (data, response) = try await URLSession.shared.data(for: request)
@@ -177,6 +177,12 @@ class MiniMaxProvider: NSObject, AIProviderProtocol, ObservableObject {
         let miniMaxResponse = try decoder.decode(MiniMaxResponse.self, from: data)
 
         await MainActor.run {
+            // Check for API errors in base_resp
+            if let baseResp = miniMaxResponse.baseResp, baseResp.statusCode != 0 {
+                self.errorMessage = "API Error: \(baseResp.statusMsg)"
+                Log.error("[MiniMax] API error: \(baseResp.statusMsg) (code: \(baseResp.statusCode))")
+            }
+
             if let modelRemains = miniMaxResponse.modelRemains, !modelRemains.isEmpty {
                 self.modelRemains = modelRemains
                 // Use the first model's data for display (they all share the same time window)
@@ -190,6 +196,8 @@ class MiniMaxProvider: NSObject, AIProviderProtocol, ObservableObject {
                     self.currentPeriodStart = Date(timeIntervalSince1970: Double(first.startTime) / 1000.0)
                     self.currentPeriodEnd = Date(timeIntervalSince1970: Double(first.endTime) / 1000.0)
                 }
+            } else {
+                Log.warning("[MiniMax] No model data found in response")
             }
             Log.info("[MiniMax] Remaining chats: \(self.remainingChats) / \(self.totalChats)")
         }
@@ -213,7 +221,7 @@ class MiniMaxProvider: NSObject, AIProviderProtocol, ObservableObject {
         request.addValue("no-cache", forHTTPHeaderField: "Cache-Control")
         request.addValue(cookies, forHTTPHeaderField: "Cookie")
         request.addValue("https://platform.minimaxi.com/", forHTTPHeaderField: "Referer")
-        request.addValue("platform.minimaxi.com", forHTTPHeaderField: "Origin")
+        request.addValue("https://www.minimaxi.com", forHTTPHeaderField: "Origin")
         request.addValue("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36", forHTTPHeaderField: "User-Agent")
 
         let (data, response) = try await URLSession.shared.data(for: request)

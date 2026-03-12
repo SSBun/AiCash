@@ -141,7 +141,7 @@ struct StatusMenuProviderRow: View {
                             .foregroundColor(.secondary)
                         Text(provider.todayUsageString)
                             .font(.system(size: 12, weight: .semibold))
-                            .foregroundColor(.red)
+                            .foregroundColor(Color(red: 0.96, green: 0.61, blue: 0.04))
                     }
                 }
             }
@@ -174,7 +174,7 @@ struct ZenMuxStatusRow: View {
                         .foregroundColor(.secondary)
                     Text("$\(String(format: "%.6f", provider.todayUsage))")
                         .font(.system(size: 12, weight: .semibold))
-                        .foregroundColor(.red)
+                        .foregroundColor(Color(red: 0.96, green: 0.61, blue: 0.04))
                 }
             }
 
@@ -182,7 +182,7 @@ struct ZenMuxStatusRow: View {
             HStack(spacing: 12) {
                 HStack(spacing: 4) {
                     Circle()
-                        .fill(Color.green)
+                        .fill(Color(red: 0.06, green: 0.73, blue: 0.51)) // Emerald
                         .frame(width: 6, height: 6)
                     Text("Charge")
                         .font(.system(size: 9))
@@ -195,7 +195,7 @@ struct ZenMuxStatusRow: View {
 
                 HStack(spacing: 4) {
                     Circle()
-                        .fill(Color.orange)
+                        .fill(Color(red: 0.96, green: 0.61, blue: 0.04)) // Amber
                         .frame(width: 6, height: 6)
                     Text("Discount")
                         .font(.system(size: 9))
@@ -232,7 +232,7 @@ struct MiniMaxStatusRow: View {
                             .foregroundColor(.secondary)
                         Text("\(provider.totalChats - provider.remainingChats)")
                             .font(.system(size: 12, weight: .semibold))
-                            .foregroundColor(.red)
+                            .foregroundColor(Color(red: 0.96, green: 0.61, blue: 0.04))
                     }
                 }
             }
@@ -270,11 +270,11 @@ struct MiniMaxStatusRow: View {
 
     private func remainingColor(percent: Double) -> Color {
         if percent > 50 {
-            return .green
+            return Color(red: 0.06, green: 0.73, blue: 0.51) // Emerald
         } else if percent > 20 {
-            return .orange
+            return Color(red: 0.96, green: 0.61, blue: 0.04) // Amber
         } else {
-            return .red
+            return Color(red: 0.96, green: 0.25, blue: 0.37) // Rose
         }
     }
 }
